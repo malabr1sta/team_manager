@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:16
+    container_name: team_db
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - team_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+    container_name: team_manager
+    env_file: .env
+    ports:
+      - "8000:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ./app
+          target: /app/app
+          initial_sync: true
+          ignore:
+            - "__pycache__/"
+            - "*.pyc"
+        - action: rebuild
+          path: pyproject.toml
+        - action: rebuild
+          path: uv.lock
+        - action: sync
+          path: ./alembic
+          target: /app/alembic
+
+volumes:
+  team_db_data:
