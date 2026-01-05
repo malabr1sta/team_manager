@@ -1,5 +1,7 @@
-from app.database import Base
+from app.core import database as db
 from sqlalchemy import Enum as SqlEnum
+from fastapi_users.db import SQLAlchemyBaseUserTable
+
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import (
     Mapped,
@@ -16,7 +18,7 @@ class RoleEnum(str, enum.Enum):
     admin = "admin"
 
 
-class User(Base):
+class User(SQLAlchemyBaseUserTable[int], db.Base):
 
     first_name: Mapped[str] = mapped_column(String(100), nullable=False)
     last_name: Mapped[str] = mapped_column(String(100), nullable=False)

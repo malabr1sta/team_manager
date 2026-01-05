@@ -46,3 +46,4 @@ services:
 
 volumes:
   team_db_data:
+  team_redis_data:

@@ -8,4 +8,5 @@ class Settings(BaseSettings):
     database_name: str | None = None
     database_host: str | None = None
     database_port: int | None = None
-    model_config = SettingsConfigDict(env_file="./.env")
+    redis_password: str | None = None
+    model_config = SettingsConfigDict(env_file="././.env")

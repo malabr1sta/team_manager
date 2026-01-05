@@ -13,12 +13,6 @@ class Base(AsyncAttrs, DeclarativeBase):
     def __tablename__(cls) -> str:
         return cls.__name__.lower()
 
-    id: Mapped[int] = mapped_column(
-        Integer,
-        primary_key=True,
-        autoincrement=True,
-    )
-
     @declared_attr
     def created_dttm(cls) -> Mapped[DateTime]:
         return mapped_column(
@@ -35,3 +29,13 @@ class Base(AsyncAttrs, DeclarativeBase):
             onupdate=func.now(),
             nullable=False,
         )
+
+
+class IdMixin:
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+

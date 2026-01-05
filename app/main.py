@@ -3,12 +3,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
-from app import dependencies
+from app.deps import base as base_deps
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    settings = dependencies.get_settings()
+    settings = base_deps.get_settings()
 
     engine = create_async_engine(
         f"postgresql+asyncpg://{settings.database_user}:"

@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-from app.database import Base
-from app.dependencies import get_settings
+from app.core.database import Base
+from app.deps.base import get_settings
 
 
 settings = get_settings()
