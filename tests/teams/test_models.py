@@ -1,9 +1,14 @@
+from datetime import datetime, timezone, timedelta
 from app.teams import models as team_models
 from app.teams.custom_exception import (
     MemberNotFoundException,
-    MemberNotAdminException
+    MemberNotAdminException,
+    TeamIdMissingException,
+    TaskDeadlineException,
+    TaskSupervisorException,
+    CommentException
 )
-from app.core.custom_types import ids, role
+from app.core.custom_types import ids, role, task_status
 
 import pytest
 
@@ -105,6 +110,128 @@ class TestException:
             action_add = team_models.ActionAddMemberTeam(
                 team, new_member.user_id
             )
+
+    def test_get_member_exception(self, get_team_admin, new_member):
+        team, _ = get_team_admin
+        with pytest.raises(MemberNotFoundException):
+            team.get_member(new_member.user_id, new_member.role)
+
+    def test_add_member_exception(self, new_member):
+        admin = team_models.Member(
+            ids.UserId(1), ids.TeamId(1), role.UserRole.ADMIN
+        )
+        team = team_models.Team(None, [admin])
+        action_add = team_models.ActionAddMemberTeam(
+                team, admin.user_id
+        )
+        with pytest.raises(TeamIdMissingException):
+            action_add.execute(new_member.user_id, new_member.role)
+
+
+class TestTask:
+
+    def test_create_task(self, get_team_for_task):
+        team, manager, member = get_team_for_task
+        now_time = datetime.now(timezone.utc)
+        deadline = now_time + timedelta(days=3)
+        task = team_models.create_task(
+            manager.user_id, team,
+            deadline, "title", "description",
+        )
+        assert task.team_id == manager.team_id
+        with pytest.raises(MemberNotFoundException):
+            team_models.create_task(
+                member.user_id, team,
+                deadline, "title", "description",
+            )
+        new_manager = team_models.Member(
+            ids.UserId(3),
+            ids.TeamId(100),
+            role.UserRole.MANAGER
+        )
+        with pytest.raises(MemberNotFoundException):
+            team_models.create_task(
+                new_manager.user_id, team,
+                deadline, "title", "description",
+            )
+        new_deadline = now_time - timedelta(days=3)
+        with pytest.raises(TaskDeadlineException):
+            team_models.create_task(
+                manager.user_id, team,
+                new_deadline, "title", "description",
+            )
+
+    def test_appointment_of_an_executor(self, get_task):
+        task, team, manager, member = get_task
+        other_member = team_models.Member(
+            ids.UserId(99),
+            ids.TeamId(999),
+            role.UserRole.MANAGER
+        )
+        with pytest.raises(TaskSupervisorException):
+            team_models.ActionAppointmentExecutorTask(
+                task, member.user_id
+            )
+        with pytest.raises(TaskSupervisorException):
+            team_models.ActionAppointmentExecutorTask(
+                task, other_member.user_id
+            )
+        action = team_models.ActionAppointmentExecutorTask(
+            task, manager.user_id
+        )
+        action.execute(member.user_id, team)
+        assert task.executor_id == member.user_id
+
+    def test_update_task(self, get_task):
+        task, team, manager, member = get_task
+        with pytest.raises(TaskSupervisorException):
+            team_models.ActionUpdateTask(
+                task, member.user_id
+            )
+
+        action = team_models.ActionUpdateTask(
+            task, manager.user_id
+        )
+        action.execute(
+            title="Fix bug",
+            description="Fix critical production bug",
+            status=task_status.TaskStatus.IN_PROGRESS,
+            deleted = True
+        )
+        assert task.title =="Fix bug"
+        assert task.description == "Fix critical production bug"
+        assert task.status == task_status.TaskStatus.IN_PROGRESS
+        assert task.deleted
+
+    def test_add_comment(self, get_task):
+        task, team, manager, member = get_task
+        other_member = team_models.Member(
+            ids.UserId(99),
+            ids.TeamId(999),
+            role.UserRole.MANAGER
+        )
+        with pytest.raises(CommentException):
+            team_models.ActionCreateComment(
+                team, other_member.user_id
+            )
+            action = team_models.ActionCreateComment(
+                team, other_member.user_id
+            )
+            comment = action.execute(
+                task.id, "text", ids.CommentId(1)
+            )
+            assert comment.id == ids.CommentId(1)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
