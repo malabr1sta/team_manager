@@ -31,7 +31,7 @@ def get_user_evaluations() -> User:
         ),
         Evaluation(
             user_id=user_id, team_id=team1, task_id=task2,
-            grade=5, created_at=now - timedelta(days=8)
+            grade=4, created_at=now - timedelta(days=8)
         ),
         Evaluation(
             user_id=user_id, team_id=team2, task_id=task1,
@@ -44,5 +44,4 @@ def get_user_evaluations() -> User:
         ),
     ]
 
-    user = User(id=user_id, evaluations=evaluations)
-    return user
+    return User(id=user_id, evaluations=evaluations)
