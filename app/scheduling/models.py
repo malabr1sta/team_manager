@@ -91,12 +91,35 @@ class Meeting(Entity):
             or self._start >= other._end
         )
 
-    def add_participant(self, user: "User", team: Team):
+    def add_participant(
+            self, user: "User", team: Team
+    ) -> MeetingParticipant | None:
         """Add a user to the meeting if all domain rules are satisfied."""
         self.check_participant(user._id, team)
         user.check_meeting(self)
-        user._meetings.append(self)
-        self._participants.append(MeetingParticipant(user._id, self._id))
+        participant = MeetingParticipant(user._id, self._id)
+        if participant not in self._participants:
+            user._meetings.append(self)
+            self._participants.append(participant)
+            return participant
+
+    def remove_participant(
+            self, user_id: ids.UserId
+    ) -> MeetingParticipant | None:
+        """Remove participant from meeting."""
+        if self._organizer_id == user_id:
+            return None
+
+        participant = MeetingParticipant(
+            user_id=user_id,
+            meeting_id=self._id,
+        )
+
+        if participant in self._participants:
+            self._participants.remove(participant)
+            return participant
+
+        return None
 
     def cancel(self) -> None:
         """Cancel the meeting if it has not started yet."""
@@ -108,7 +131,7 @@ class Meeting(Entity):
             raise custom_exception.MeetingCancelledError(
                 "Cannot cancel past or ongoing meeting"
             )
-        self.is_cancelled = True
+        self._is_cancelled = True
 
 
 class User(Entity):

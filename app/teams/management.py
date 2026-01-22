@@ -32,8 +32,10 @@ class TeamManagement(ABC):
 class ActionAddMemberTeam(TeamManagement):
     """Add a new member to the team."""
 
-    def execute(self, user_id: ids.UserId, role: role.UserRole):
-        self._team.add_member(
+    def execute(
+            self, user_id: ids.UserId, role: role.UserRole
+    ) -> Member | None:
+        return self._team.add_member(
             user_id, role
         )
 
@@ -41,8 +43,10 @@ class ActionAddMemberTeam(TeamManagement):
 class ActionRemoveMemberTeam(TeamManagement):
     """Remove an existing member from the team."""
 
-    def execute(self, user_id: ids.UserId, role: role.UserRole):
-        self._team.remove_member(user_id, role)
+    def execute(
+            self, user_id: ids.UserId, role: role.UserRole
+    ) -> Member:
+        return self._team.remove_member(user_id, role)
 
 
 class ActionAssigningRolesTeam(TeamManagement):

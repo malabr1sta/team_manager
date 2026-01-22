@@ -24,7 +24,8 @@ def meeting(team):
     start = datetime.now(timezone.utc) + timedelta(hours=1)
     end = start + timedelta(hours=2)
     return Meeting(
-        organizer_id=1,
+        id=ids.MeetingId(1),
+        organizer_id=ids.UserId(111),
         team_id=team._id,
         start=start,
         end=end,
@@ -36,7 +37,8 @@ def overlapping_meeting(team, meeting):
     start = meeting._start + timedelta(minutes=30)
     end = meeting._end + timedelta(hours=1)
     return Meeting(
-        organizer_id=2,
+        id=ids.MeetingId(1),
+        organizer_id=ids.UserId(222),
         team_id=team._id,
         start=start,
         end=end,
@@ -48,7 +50,8 @@ def non_overlapping_meeting(team, meeting):
     start = meeting._end + timedelta(minutes=10)
     end = start + timedelta(hours=1)
     return Meeting(
-        organizer_id=3,
+        id=ids.MeetingId(1),
+        organizer_id=ids.UserId(333),
         team_id=team._id,
         start=start,
         end=end,

@@ -55,7 +55,9 @@ class Team(Entity):
             for member in self._members
         )
 
-    def add_member(self, user_id: ids.UserId, role: role.UserRole):
+    def add_member(
+            self, user_id: ids.UserId, role: role.UserRole
+    ) -> Member | None:
         """Add member in team"""
         if self.id is None:
             raise custom_exception.TeamIdMissingException(
@@ -63,11 +65,15 @@ class Team(Entity):
         new_member = Member(user_id, self._id, role)
         if new_member not in self._members:
             self._members.append(new_member)
+            return new_member
 
-    def remove_member(self, user_id: ids.UserId, role: role.UserRole):
+    def remove_member(
+            self, user_id: ids.UserId, role: role.UserRole
+    ) -> Member:
         """Remove member in team"""
         member = self.get_member(user_id, role)
         self._members.remove(member)
+        return member
 
     def has_member(self, user_id: ids.UserId, role: role.UserRole) -> bool:
             """Check whether the user is already a team member."""

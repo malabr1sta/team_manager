@@ -9,3 +9,7 @@ class UserRole(str, Enum):
 class UserTaskRole(str, Enum):
     MEMBER = "member"
     MANAGER = "manager"
+
+class CalendarEventRole(str, Enum):
+    MEETING = "meeting"
+    TASK = "task"
