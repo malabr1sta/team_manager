@@ -17,11 +17,13 @@ class Team(Entity):
 
     def __init__(
             self, id: ids.TeamId | None = None,
-            members: list[Member] | None = None
+            members: list[Member] | None = None,
+            name: str = ""
     ):
         """Create a team with a unique identifier."""
         self._id = id
         self._members = members if members is not None else []
+        self._name = name
 
     @property
     def id(self) -> ids.TeamId | None:

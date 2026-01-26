@@ -5,10 +5,10 @@ from app.teams import custom_exception
 from app.core.custom_types import ids, role
 
 
-def create_team(user_id: ids.UserId, team_id: ids.TeamId ) -> Team:
+def create_team(user_id: ids.UserId, team_id: ids.TeamId, name: str = "") -> Team:
     """Funtions for create team"""
     admin = Member(user_id, team_id, role.UserRole.ADMIN)
-    return Team(team_id, [admin])
+    return Team(team_id, [admin], name)
 
 
 class TeamManagement(ABC):

@@ -1,6 +1,6 @@
 from enum import Enum
 
-class CalendarEventRole(str, Enum):
+class CalendarEventType(str, Enum):
     MEETING = "meeting"
     TASK = "task"
 

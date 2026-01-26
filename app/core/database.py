@@ -7,11 +7,11 @@ from sqlalchemy.orm import (
     mapped_column,
 )
 
-class Base(AsyncAttrs, DeclarativeBase):
 
-    @declared_attr.directive
-    def __tablename__(cls) -> str:
-        return cls.__name__.lower()
+class Base(AsyncAttrs, DeclarativeBase):
+    # Indicates whether to use a schema in the database.
+    # This is needed for tests because SQLite does not support schemas.
+    USE_SCHEMA: bool = True
 
     @declared_attr
     def created_dttm(cls) -> Mapped[DateTime]:

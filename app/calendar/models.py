@@ -23,7 +23,7 @@ class CalendarEvent(Entity):
         self,
         user_id: ids.UserId,
         id: ids.CalendarEventId,
-        type: calendar_type.CalendarEventRole,
+        type: calendar_type.CalendarEventType,
         description: str,
         title: str,
         time: datetime,
