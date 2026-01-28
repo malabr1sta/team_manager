@@ -16,7 +16,7 @@ class TaskUserProtocol(Protocol):
     async def save(self, user: TaskUser) -> TaskUser:
         ...
 
-    async def get_by_id(self, id: int) -> TaskUser:
+    async def get_by_id(self, id: int) -> TaskUser | None:
         ...
 
 

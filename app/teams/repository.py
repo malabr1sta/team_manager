@@ -80,7 +80,7 @@ class SQLAlchemyTeamRepository:
         orm_model = result.scalar_one_or_none()
         return mappers.TeamMapper.to_domain(orm_model) if orm_model else None
 
-    async def save(self, team: models.Team) -> models.Team | None:
+    async def save(self, team: models.Team):
         if team.id is None:
             orm_team = mappers.TeamMapper.to_orm(team)
             self.session.add(orm_team)
