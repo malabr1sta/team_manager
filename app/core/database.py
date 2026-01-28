@@ -13,22 +13,20 @@ class Base(AsyncAttrs, DeclarativeBase):
     # This is needed for tests because SQLite does not support schemas.
     USE_SCHEMA: bool = True
 
-    @declared_attr
-    def created_dttm(cls) -> Mapped[DateTime]:
-        return mapped_column(
-            DateTime(timezone=True),
-            server_default=func.now(),
-            nullable=False,
-        )
 
-    @declared_attr
-    def updated_dttm(cls) -> Mapped[DateTime]:
-        return mapped_column(
-            DateTime(timezone=True),
-            server_default=func.now(),
-            onupdate=func.now(),
-            nullable=False,
-        )
+class TimestampMixin:
+    created_dttm: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    updated_dttm: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
 
 
 class IdMixin:

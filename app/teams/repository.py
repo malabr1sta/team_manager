@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.teams import (
@@ -7,6 +7,16 @@ from app.teams import (
     orm_models,
     mappers
 )
+
+class SQLAlchemyUserRepository:
+    """Implementing a user's repository"""
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def save(self, id: int):
+        self.session.add(
+            orm_models.TeamUserOrm(id=id)
+        )
 
 
 class SQLAlchemyMemberRepository:
@@ -40,20 +50,19 @@ class SQLAlchemyMemberRepository:
         return mappers.MemberMapper.to_domain(orm_model) if orm_model else None
 
     async def save(self, member: models.Member):
-        member_domain = await self.get_by_user_and_team(member.user_id, member.team_id)
-        if member_domain is None:
+        result = await self.session.execute(
+            select(orm_models.MemberOrm)
+            .where(
+                orm_models.MemberOrm.user_id == member.user_id,
+                orm_models.MemberOrm.team_id == member.team_id
+            )
+        )
+        orm_model = result.scalar_one_or_none()
+        if orm_model is None:
             orm_member = mappers.MemberMapper.to_orm(member)
             self.session.add(orm_member)
         else:
-            result = await self.session.execute(
-                select(orm_models.MemberOrm)
-                .where(
-                    orm_models.MemberOrm.user_id == member.user_id,
-                    orm_models.MemberOrm.team_id == member.team_id,
-                )
-            )
-            orm_member = result.scalar_one()
-            mappers.MemberMapper.update_orm(orm_member, member)
+            mappers.MemberMapper.update_orm(orm_model, member)
 
 
 class SQLAlchemyTeamRepository:

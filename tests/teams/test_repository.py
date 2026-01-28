@@ -211,3 +211,26 @@ async def test_save_updates_existing_member(async_session):
     orm_member = result.scalar_one()
 
     assert orm_member.role == role.UserRole.ADMIN
+
+
+@pytest.mark.anyio
+async def test_user_repository_save(async_session):
+    repo = repository.SQLAlchemyUserRepository(async_session)
+
+    await repo.save(id=1)
+    await async_session.commit()
+
+    result = await async_session.execute(select(orm_models.TeamUserOrm))
+    users = result.scalars().all()
+
+    assert len(users) == 1
+    assert users[0].id == 1
+
+    await repo.save(id=2)
+    await async_session.commit()
+
+    result = await async_session.execute(select(orm_models.TeamUserOrm))
+    users = result.scalars().all()
+
+    assert len(users) == 2
+    assert {u.id for u in users} == {1, 2}

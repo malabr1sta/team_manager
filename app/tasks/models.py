@@ -7,12 +7,19 @@ from app.tasks import custom_exception
 from dataclasses import dataclass
 
 
+class TaskUser(Entity):
+
+    def __init__(self, id: ids.UserId, username: str):
+        self.id = id
+        self.username = username
+
 @dataclass(frozen=True)
 class MemberTask:
     """Represents a task member with an assigned role."""
     user_id: ids.UserId
     team_id: ids.TeamId
     role: role.UserTaskRole
+
 
 class Team(Entity):
     """Team for task's context."""
@@ -128,7 +135,6 @@ class Task(Entity):
         self._description = description
         self._status = status
         self._deadline = deadline
-        self._comments: list[Comment] = []
         self._created_at = created_at
         self._updated_at = updated_at
         self._executor_id = executor_id
@@ -179,11 +185,6 @@ class Task(Entity):
     @property
     def deleted(self) -> bool:
         return self._deleted
-
-    @property
-    def comments(self) -> tuple[Comment, ...]:
-        """Return task comments as an immutable collection."""
-        return tuple(self._comments)
 
     def check_member(
             self, user_id: ids.UserId, role: role.UserTaskRole,

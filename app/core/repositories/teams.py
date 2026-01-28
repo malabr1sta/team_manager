@@ -4,6 +4,14 @@ from app.teams.models import Team, Member
 
 
 @runtime_checkable
+class TeamUserProtocol(Protocol):
+    """Protocol user's repository"""
+
+    async def save(self, id: int):
+        ...
+
+
+@runtime_checkable
 class TeamRepositoryProtocol(Protocol):
     """Protocol team's repository"""
 

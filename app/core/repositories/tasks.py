@@ -1,0 +1,78 @@
+from typing import Protocol, runtime_checkable
+
+from app.tasks.models import (
+    MemberTask,
+    TaskUser,
+    Task,
+    Team,
+    Comment
+)
+
+
+@runtime_checkable
+class TaskUserProtocol(Protocol):
+    """Protocol user's repository"""
+
+    async def save(self, user: TaskUser) -> TaskUser:
+        ...
+
+    async def get_by_id(self, id: int) -> TaskUser:
+        ...
+
+
+@runtime_checkable
+class TaskMemberProtocol(Protocol):
+
+    async def get_by_user(
+        self, user_id: int
+    ) -> list[MemberTask]:
+        ...
+
+    async def get_by_user_and_team(
+        self,
+        user_id: int,
+        team_id: int,
+    ) -> MemberTask | None:
+        ...
+
+    async def save(self, member: MemberTask) -> MemberTask:
+        ...
+
+
+@runtime_checkable
+class TaskTeamProtocol(Protocol):
+
+    async def get_by_id(self, id: int) -> Team :
+        ...
+
+    async def save(self, member: Team) -> Team:
+        ...
+
+
+@runtime_checkable
+class TaskCommentProtocol(Protocol):
+
+    async def get_by_id(self, id: int) ->  list[Comment]:
+        ...
+
+    async def save(self, member: Comment) -> Comment:
+        ...
+
+
+@runtime_checkable
+class TaskProtocol(Protocol):
+
+    async def get_by_id(self, id: int) -> Task:
+        ...
+
+    async def get_by_supervisor(self, id: int) -> list[Task]:
+        ...
+
+    async def get_by_team(self, id: int) -> list[Task]:
+        ...
+
+    async def get_by_executor(self, id: int) -> list[Task]:
+        ...
+
+    async def save(self, member: Task) -> Task:
+        ...
