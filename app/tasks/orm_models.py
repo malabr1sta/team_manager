@@ -1,4 +1,4 @@
-from app.core.database import Base, IdMixin
+from app.core.database import Base, IdMixin, TimestampMixin
 from app.core.custom_types import task_status
 from datetime import datetime
 
@@ -24,7 +24,7 @@ USER_FK = f"{SCHEMA}.tasks_user.id" if Base.USE_SCHEMA else "tasks_user.id"
 TABLE_ARGS = {"schema": SCHEMA} if Base.USE_SCHEMA else {}
 
 
-class TaskUserOrm(Base):
+class TaskUserOrm(Base, TimestampMixin):
     __tablename__ = 'tasks_user'
     __table_args__ = TABLE_ARGS
 
@@ -49,7 +49,7 @@ class TaskMemberOrm(Base, IdMixin):
     role: Mapped[str] = mapped_column(String)
 
 
-class TaskTeamOrm(Base, IdMixin):
+class TaskTeamOrm(Base, IdMixin, TimestampMixin):
     __tablename__ = 'task_teams'
     __table_args__ = TABLE_ARGS
 
@@ -60,7 +60,7 @@ class TaskTeamOrm(Base, IdMixin):
     )
 
 
-class CommentOrm(Base, IdMixin):
+class CommentOrm(Base, IdMixin, TimestampMixin):
     __tablename__ = 'task_comment'
     __table_args__ = TABLE_ARGS
 
@@ -80,7 +80,7 @@ class CommentOrm(Base, IdMixin):
     )
 
 
-class TaskOrm(Base, IdMixin):
+class TaskOrm(Base, IdMixin, TimestampMixin):
     __tablename__ = "tasks"
     __table_args__ = TABLE_ARGS
 
@@ -121,9 +121,3 @@ class TaskOrm(Base, IdMixin):
         nullable=False,
         default=False,
     )
-
-
-
-
-
-
