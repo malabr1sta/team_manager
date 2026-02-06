@@ -114,7 +114,8 @@ class TaskTeamMapper:
 
 class TaskCommentMapper:
 
-    def to_domain(self, orm: CommentOrm) -> Comment:
+    @staticmethod
+    def to_domain(orm: CommentOrm) -> Comment:
         """ORM -> Domain"""
         return Comment(
             id=ids.CommentId(orm.id),
@@ -124,7 +125,9 @@ class TaskCommentMapper:
             created_at=orm.created_dttm
         )
 
-    def to_orm(self, comment: Comment) -> CommentOrm:
+
+    @staticmethod
+    def to_orm(comment: Comment) -> CommentOrm:
         """Domain -> ORM"""
         return CommentOrm(
             author_id=comment.author_id,
@@ -140,7 +143,8 @@ class TaskCommentMapper:
 
 class TaskMapper:
 
-    def to_domain(self, orm: TaskOrm) -> Task:
+    @staticmethod
+    def to_domain(orm: TaskOrm) -> Task:
         """ORM -> Domain"""
         executor_id = ids.UserId(orm.executor_id) if orm.executor_id else None
         return Task(
@@ -155,7 +159,8 @@ class TaskMapper:
             created_at=orm.created_dttm
         )
 
-    def to_orm(self, task: Task) -> TaskOrm:
+    @staticmethod
+    def to_orm(task: Task) -> TaskOrm:
         """Domain -> ORM"""
         return TaskOrm(
             team_id=task.team_id,

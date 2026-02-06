@@ -454,3 +454,68 @@ async def test_save_multiple_teams_with_different_ids(async_session):
     assert found_team1.id == 100
     assert found_team2 is not None
     assert found_team2.id == 200
+
+
+@pytest.mark.anyio
+async def test_save_creates_new_comment(async_session):
+    repo = repository.SQLAlchemyTaskCommentRepository(async_session)
+    comment = models.Comment(
+        id=ids.CommentId(1),
+        task_id=ids.TaskId(10),
+        author_id=ids.UserId(5),
+        text="first comment",
+        team_id=None,
+    )
+    await repo.save(comment)
+    await async_session.commit()
+
+    result = await async_session.execute(
+        select(orm_models.CommentOrm)
+        .where(orm_models.CommentOrm.id == 1)
+    )
+    orm_comment = result.scalar_one()
+
+    assert orm_comment.id == 1
+    assert orm_comment.task_id == 10
+    assert orm_comment.author_id == 5
+    assert orm_comment.text == "first comment"
+    assert orm_comment.team_id is None
+
+
+@pytest.mark.anyio
+async def test_get_by_task_id_returns_comments(async_session):
+    repo = repository.SQLAlchemyTaskCommentRepository(async_session)
+
+    comment_1 = models.Comment(
+        id=ids.CommentId(1),
+        task_id=ids.TaskId(10),
+        author_id=ids.UserId(1),
+        text="first comment",
+    )
+    comment_2 = models.Comment(
+        id=ids.CommentId(2),
+        task_id=ids.TaskId(10),
+        author_id=ids.UserId(2),
+        text="second comment",
+    )
+
+    comment_other_task = models.Comment(
+        id=ids.CommentId(3),
+        task_id=ids.TaskId(20),
+        author_id=ids.UserId(3),
+        text="other task comment",
+    )
+
+    await repo.save(comment_1)
+    await repo.save(comment_2)
+    await repo.save(comment_other_task)
+    await async_session.commit()
+
+    comments = await repo.get_by_task_id(10)
+
+    assert len(comments) == 2
+    texts = {c._text for c in comments}
+    assert texts == {"first comment", "second comment"}
+
+    for c in comments:
+        assert isinstance(c, models.Comment)

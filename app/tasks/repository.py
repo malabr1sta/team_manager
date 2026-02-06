@@ -121,10 +121,23 @@ class SQLAlchemyTaskCommentRepository:
     async def get_by_task_id(self, task_id: int) ->  list[models.Comment]:
         result = await self.session.execute(
             select(orm_models.CommentOrm)
+            .where(orm_models.CommentOrm.task_id == task_id)
         )
+        orms = result.scalars().all()
+        return [mappers.TaskCommentMapper.to_domain(orm) for orm in orms]
 
     async def save(self, comment: models.Comment) -> None:
-        ...
+        result = await self.session.execute(
+            select(orm_models.CommentOrm)
+            .where(orm_models.CommentOrm.id == comment.id)
+        )
+
+        orm_comment = result.scalar_one_or_none()
+        if orm_comment is None:
+            self.session.add(mappers.TaskCommentMapper.to_orm(comment))
+            return
+        mappers.TaskCommentMapper.update_orm(orm_comment, comment)
+
 
 
 
