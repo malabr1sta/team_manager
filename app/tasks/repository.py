@@ -139,10 +139,54 @@ class SQLAlchemyTaskCommentRepository:
         mappers.TaskCommentMapper.update_orm(orm_comment, comment)
 
 
+class SQLAlchemyTaskRepository:
+    """Implementing a task's repository"""
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def get_by_id(self, id: int) -> models.Task | None:
+        result = await self.session.execute(
+            select(orm_models.TaskOrm)
+            .where(orm_models.TaskOrm.id == id)
+        )
+        task_orm = result.scalar_one_or_none()
+        if task_orm is None:
+            return None
+        return mappers.TaskMapper.to_domain(task_orm)
 
 
+    async def get_by_supervisor(self, id: int) -> list[models.Task]:
+        result = await self.session.execute(
+            select(orm_models.TaskOrm)
+            .where(orm_models.TaskOrm.supervisor_id == id)
+        )
+        tasks_orm = result.scalars().all()
+        return [mappers.TaskMapper.to_domain(task) for task in tasks_orm]
+
+    async def get_by_team(self, id: int) -> list[models.Task]:
+        result = await self.session.execute(
+            select(orm_models.TaskOrm)
+            .where(orm_models.TaskOrm.team_id == id)
+        )
+        tasks_orm = result.scalars().all()
+        return [mappers.TaskMapper.to_domain(task) for task in tasks_orm]
 
 
+    async def get_by_executor(self, id: int) -> list[models.Task]:
+        result = await self.session.execute(
+            select(orm_models.TaskOrm)
+            .where(orm_models.TaskOrm.executor_id == id)
+        )
+        tasks_orm = result.scalars().all()
+        return [mappers.TaskMapper.to_domain(task) for task in tasks_orm]
 
-
-
+    async def save(self, task: models.Task) -> None:
+        result = await self.session.execute(
+            select(orm_models.TaskOrm)
+            .where(orm_models.TaskOrm.id == task.id)
+        )
+        task_orm = result.scalar_one_or_none()
+        if task_orm is None:
+            self.session.add(mappers.TaskMapper.to_orm(task))
+            return
+        mappers.TaskMapper.update_orm(task_orm, task)

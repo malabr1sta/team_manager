@@ -1,11 +1,10 @@
 import pytest
+from datetime import datetime
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 
 from app.tasks import (
     models,
     orm_models,
-    mappers,
     repository
 )
 from app.core.custom_types import ids, role
@@ -519,3 +518,220 @@ async def test_get_by_task_id_returns_comments(async_session):
 
     for c in comments:
         assert isinstance(c, models.Comment)
+
+
+@pytest.mark.anyio
+async def test_save_creates_new_task(async_session):
+    repo = repository.SQLAlchemyTaskRepository(async_session)
+
+    task = models.Task(
+        id=ids.TaskId(1),
+        supervisor_id=ids.UserId(10),
+        team_id=ids.TeamId(30),
+        executor_id=ids.UserId(20),
+        deadline=datetime(2030, 1, 1, 12, 0),
+        title="Test task",
+        description="Task description",
+    )
+
+    await repo.save(task)
+    await async_session.commit()
+
+    result = await async_session.execute(
+        select(orm_models.TaskOrm)
+        .where(orm_models.TaskOrm.id == 1)
+    )
+    orm_task = result.scalar_one()
+
+    assert orm_task.id == 1
+    assert orm_task.supervisor_id == 10
+    assert orm_task.executor_id == 20
+    assert orm_task.team_id == 30
+    assert orm_task.title == "Test task"
+    assert orm_task.description == "Task description"
+
+
+@pytest.mark.anyio
+async def test_save_updates_existing_task(async_session):
+    repo = repository.SQLAlchemyTaskRepository(async_session)
+
+    existing = orm_models.TaskOrm(
+        id=1,
+        supervisor_id=10,
+        executor_id=20,
+        team_id=30,
+        deadline=datetime(2030, 1, 1, 12, 0),
+        title="Old title",
+        description="Old description",
+    )
+    async_session.add(existing)
+    await async_session.commit()
+
+    updated = models.Task(
+        id=ids.TaskId(1),
+        supervisor_id=ids.UserId(99),
+        team_id=ids.TeamId(30),
+        executor_id=ids.UserId(20),
+        deadline=datetime(2031, 1, 1, 12, 0),
+        title="New title",
+        description="New description",
+    )
+
+    await repo.save(updated)
+    await async_session.commit()
+
+    result = await async_session.execute(
+        select(orm_models.TaskOrm)
+        .where(orm_models.TaskOrm.id == 1)
+    )
+    orm_task = result.scalar_one()
+
+    assert orm_task.supervisor_id == 99
+    assert orm_task.title == "New title"
+    assert orm_task.description == "New description"
+
+
+@pytest.mark.anyio
+async def test_get_task_by_id(async_session):
+    repo = repository.SQLAlchemyTaskRepository(async_session)
+
+    async_session.add(
+        orm_models.TaskOrm(
+            id=1,
+            supervisor_id=10,
+            executor_id=None,
+            team_id=30,
+            deadline=datetime(2030, 1, 1, 12, 0),
+            title="Task",
+            description="Description",
+        )
+    )
+    await async_session.commit()
+
+    task = await repo.get_by_id(1)
+
+    assert task is not None
+    assert task.id == 1
+    assert task.supervisor_id == 10
+    assert task.team_id == 30
+
+
+@pytest.mark.anyio
+async def test_get_task_by_id_returns_none(async_session):
+    repo = repository.SQLAlchemyTaskRepository(async_session)
+    task = await repo.get_by_id(999)
+    assert task is None
+
+
+@pytest.mark.anyio
+async def test_get_tasks_by_supervisor(async_session):
+    repo = repository.SQLAlchemyTaskRepository(async_session)
+
+    async_session.add_all([
+        orm_models.TaskOrm(
+            id=1,
+            supervisor_id=10,
+            executor_id=None,
+            team_id=30,
+            deadline=datetime(2030, 1, 1, 12, 0),
+            title="Task 1",
+            description="Desc",
+        ),
+        orm_models.TaskOrm(
+            id=2,
+            supervisor_id=10,
+            executor_id=None,
+            team_id=31,
+            deadline=datetime(2030, 1, 2, 12, 0),
+            title="Task 2",
+            description="Desc",
+        ),
+        orm_models.TaskOrm(
+            id=3,
+            supervisor_id=11,
+            executor_id=None,
+            team_id=32,
+            deadline=datetime(2030, 1, 3, 12, 0),
+            title="Task 3",
+            description="Desc",
+        ),
+    ])
+    await async_session.commit()
+
+    tasks = await repo.get_by_supervisor(10)
+
+    assert len(tasks) == 2
+    assert {task.id for task in tasks} == {1, 2}
+
+
+@pytest.mark.anyio
+async def test_get_tasks_by_executor(async_session):
+    repo = repository.SQLAlchemyTaskRepository(async_session)
+
+    async_session.add_all([
+        orm_models.TaskOrm(
+            id=1,
+            supervisor_id=10,
+            executor_id=20,
+            team_id=30,
+            deadline=datetime(2030, 1, 1, 12, 0),
+            title="Task 1",
+            description="Desc",
+        ),
+        orm_models.TaskOrm(
+            id=2,
+            supervisor_id=11,
+            executor_id=20,
+            team_id=31,
+            deadline=datetime(2030, 1, 2, 12, 0),
+            title="Task 2",
+            description="Desc",
+        ),
+        orm_models.TaskOrm(
+            id=3,
+            supervisor_id=12,
+            executor_id=21,
+            team_id=32,
+            deadline=datetime(2030, 1, 3, 12, 0),
+            title="Task 3",
+            description="Desc",
+        ),
+    ])
+    await async_session.commit()
+
+    tasks = await repo.get_by_executor(20)
+
+    assert len(tasks) == 2
+    assert {task.id for task in tasks} == {1, 2}
+
+
+@pytest.mark.anyio
+async def test_get_tasks_by_team(async_session):
+    repo = repository.SQLAlchemyTaskRepository(async_session)
+
+    async_session.add_all([
+        orm_models.TaskOrm(
+            id=1,
+            supervisor_id=10,
+            executor_id=None,
+            team_id=30,
+            deadline=datetime(2030, 1, 1, 12, 0),
+            title="Task 1",
+            description="Desc",
+        ),
+        orm_models.TaskOrm(
+            id=2,
+            supervisor_id=11,
+            executor_id=None,
+            team_id=30,
+            deadline=datetime(2030, 1, 2, 12, 0),
+            title="Task 2",
+            description="Desc",
+        ),
+    ])
+    await async_session.commit()
+
+    tasks = await repo.get_by_team(30)
+
+    assert len(tasks) == 2
+    assert {task.id for task in tasks} == {1, 2}

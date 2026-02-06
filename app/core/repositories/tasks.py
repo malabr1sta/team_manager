@@ -62,7 +62,7 @@ class TaskCommentProtocol(Protocol):
 @runtime_checkable
 class TaskProtocol(Protocol):
 
-    async def get_by_id(self, id: int) -> Task:
+    async def get_by_id(self, id: int) -> Task | None:
         ...
 
     async def get_by_supervisor(self, id: int) -> list[Task]:
@@ -74,5 +74,5 @@ class TaskProtocol(Protocol):
     async def get_by_executor(self, id: int) -> list[Task]:
         ...
 
-    async def save(self, member: Task) -> Task:
+    async def save(self, task: Task) -> None:
         ...
