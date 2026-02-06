@@ -47,6 +47,7 @@ class TeamOrm(Base, IdMixin, TimestampMixin):
     name: Mapped[str] = mapped_column(String)
     members = relationship(
         MemberOrm,
-        lazy="joined",
+        foreign_keys="MemberOrm.team_id",
+        lazy="selectin",
         cascade="all, delete-orphan"
     )

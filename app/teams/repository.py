@@ -1,6 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 
 from app.teams import (
     models,
@@ -75,7 +74,6 @@ class SQLAlchemyTeamRepository:
         result = await self.session.execute(
             select(orm_models.TeamOrm)
             .where(orm_models.TeamOrm.id == team_id)
-            .options(selectinload(orm_models.TeamOrm.members))
         )
         orm_model = result.scalar_one_or_none()
         return mappers.TeamMapper.to_domain(orm_model) if orm_model else None
@@ -88,7 +86,6 @@ class SQLAlchemyTeamRepository:
             result = await self.session.execute(
                 select(orm_models.TeamOrm)
                 .where(orm_models.TeamOrm.id == team.id)
-                .options(selectinload(orm_models.TeamOrm.members))
             )
             orm_model = result.scalar_one()
             mappers.TeamMapper.update_orm(orm_model, team)

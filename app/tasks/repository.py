@@ -1,6 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 
 from app.tasks import (
     models,
@@ -84,6 +83,50 @@ class SQLAlchemyTaskMemberRepository:
             self.session.add(mappers.TaskMemberMapper.to_orm(member))
             return
         mappers.TaskMemberMapper.update_orm(orm, member)
+
+
+class SQLAlchemyTeamMemberRepository:
+    """Implementing a team's repository"""
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def get_by_id(self, id: int) -> models.Team | None:
+        result = await self.session.execute(
+            select(orm_models.TaskTeamOrm)
+            .where(orm_models.TaskTeamOrm.id == id)
+        )
+        orm_team = result.scalar_one_or_none()
+        if orm_team is None:
+            return
+        return mappers.TaskTeamMapper.to_domain(orm_team)
+
+    async def save(self, team: models.Team) -> None:
+        result = await self.session.execute(
+            select(orm_models.TaskTeamOrm)
+            .where(orm_models.TaskTeamOrm.id == team.id)
+        )
+        orm_team = result.scalar_one_or_none()
+        if orm_team is None:
+            self.session.add(mappers.TaskTeamMapper.to_orm(team))
+            return
+        mappers.TaskTeamMapper.update_orm(orm_team, team)
+
+
+
+class SQLAlchemyTaskCommentRepository:
+    """Implementing a comment's repository"""
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def get_by_task_id(self, task_id: int) ->  list[models.Comment]:
+        result = await self.session.execute(
+            select(orm_models.CommentOrm)
+        )
+
+    async def save(self, comment: models.Comment) -> None:
+        ...
+
+
 
 
 

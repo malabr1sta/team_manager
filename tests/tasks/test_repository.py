@@ -274,3 +274,183 @@ async def test_get_by_user_and_team_filters_correctly(async_session):
     assert members[0].user_id == 1
     assert members[0].team_id == 1
 
+
+@pytest.mark.anyio
+async def test_save_creates_new_team(async_session):
+    repo = repository.SQLAlchemyTeamMemberRepository(async_session)
+    team = models.Team(
+        id=ids.TeamId(100),
+        members=[]
+    )
+
+    await repo.save(team)
+    await async_session.commit()
+
+    result = await async_session.execute(
+        select(orm_models.TaskTeamOrm)
+        .where(orm_models.TaskTeamOrm.id == 100)
+    )
+    orm_team = result.scalar_one()
+
+    assert orm_team.id == 100
+
+
+@pytest.mark.anyio
+async def test_save_updates_existing_team(async_session):
+    repo = repository.SQLAlchemyTeamMemberRepository(async_session)
+
+    team = models.Team(
+        id=ids.TeamId(100),
+        members=[]
+    )
+
+    await repo.save(team)
+    await async_session.commit()
+
+    updated_team = models.Team(
+        id=ids.TeamId(100),
+        members=[
+            models.MemberTask(
+                user_id=ids.UserId(1),
+                team_id=ids.TeamId(100),
+                role=role.UserTaskRole.MEMBER
+            )
+        ]
+    )
+
+    await repo.save(updated_team)
+    await async_session.commit()
+
+    result = await async_session.execute(
+        select(orm_models.TaskTeamOrm)
+        .where(orm_models.TaskTeamOrm.id == 100)
+    )
+    orm_team = result.scalar_one()
+
+    assert orm_team.id == 100
+
+    result_all = await async_session.execute(
+        select(orm_models.TaskTeamOrm)
+        .where(orm_models.TaskTeamOrm.id == 100)
+    )
+    all_teams = result_all.scalars().all()
+    assert len(all_teams) == 1
+
+
+@pytest.mark.anyio
+async def test_get_by_id_returns_team(async_session):
+    repo = repository.SQLAlchemyTeamMemberRepository(async_session)
+
+    team = models.Team(
+        id=ids.TeamId(200),
+        members=[
+            models.MemberTask(
+                user_id=ids.UserId(1),
+                team_id=ids.TeamId(200),
+                role=role.UserTaskRole.MANAGER
+            )
+        ]
+    )
+
+    await repo.save(team)
+    await async_session.commit()
+
+    found_team = await repo.get_by_id(200)
+
+    assert found_team is not None
+    assert found_team.id == 200
+    assert len(found_team.members) == 1
+    assert found_team.members[0].user_id == 1
+    assert found_team.members[0].role == role.UserTaskRole.MANAGER
+
+
+@pytest.mark.anyio
+async def test_get_by_id_returns_none_if_not_found(async_session):
+    repo = repository.SQLAlchemyTeamMemberRepository(async_session)
+
+    found_team = await repo.get_by_id(999)
+
+    assert found_team is None
+
+
+@pytest.mark.anyio
+async def test_save_team_with_multiple_members(async_session):
+    repo = repository.SQLAlchemyTeamMemberRepository(async_session)
+
+    team = models.Team(
+        id=ids.TeamId(300),
+        members=[
+            models.MemberTask(
+                user_id=ids.UserId(1),
+                team_id=ids.TeamId(300),
+                role=role.UserTaskRole.MANAGER
+            ),
+            models.MemberTask(
+                user_id=ids.UserId(2),
+                team_id=ids.TeamId(300),
+                role=role.UserTaskRole.MEMBER
+            ),
+            models.MemberTask(
+                user_id=ids.UserId(3),
+                team_id=ids.TeamId(300),
+                role=role.UserTaskRole.MEMBER
+            )
+        ]
+    )
+
+    await repo.save(team)
+    await async_session.commit()
+
+    found_team = await repo.get_by_id(300)
+
+    assert found_team is not None
+    assert found_team.id == 300
+    assert len(found_team.members) == 3
+
+    user_ids = {member.user_id for member in found_team.members}
+    assert user_ids == {1, 2, 3}
+
+
+@pytest.mark.anyio
+async def test_save_team_with_empty_members(async_session):
+    repo = repository.SQLAlchemyTeamMemberRepository(async_session)
+
+    team = models.Team(
+        id=ids.TeamId(400),
+        members=[]
+    )
+
+    await repo.save(team)
+    await async_session.commit()
+
+    found_team = await repo.get_by_id(400)
+
+    assert found_team is not None
+    assert found_team.id == 400
+    assert len(found_team.members) == 0
+
+
+@pytest.mark.anyio
+async def test_save_multiple_teams_with_different_ids(async_session):
+    repo = repository.SQLAlchemyTeamMemberRepository(async_session)
+
+    team1 = models.Team(
+        id=ids.TeamId(100),
+        members=[]
+    )
+    team2 = models.Team(
+        id=ids.TeamId(200),
+        members=[]
+    )
+
+    await repo.save(team1)
+    await repo.save(team2)
+    await async_session.commit()
+
+    found_team1 = await repo.get_by_id(100)
+    found_team2 = await repo.get_by_id(200)
+
+    assert found_team1 is not None
+    assert found_team1.id == 100
+    assert found_team2 is not None
+    assert found_team2.id == 200

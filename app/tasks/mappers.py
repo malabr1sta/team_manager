@@ -81,19 +81,22 @@ class TaskTeamMapper:
     @staticmethod
     def to_orm(team: Team) -> TaskTeamOrm:
         """Domain -> ORM"""
-        team_orm = TaskTeamOrm(
-            id=team.id,
-        )
-
-        for member in team.members:
-            member_model = TaskMemberOrm(
+        members_orm = [
+            TaskMemberOrm(
                 user_id=member.user_id,
                 team_id=member.team_id,
                 role=member.role.value
             )
-            team_orm.members.append(member_model)
+            for member in team.members
+        ]
+
+        team_orm = TaskTeamOrm(
+            id=team.id,
+            members=members_orm
+        )
 
         return team_orm
+
 
     @staticmethod
     def update_orm(team_orm: TaskTeamOrm, team: Team) -> None:

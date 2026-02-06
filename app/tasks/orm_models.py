@@ -60,7 +60,8 @@ class TaskTeamOrm(Base, TimestampMixin):
 
     members = relationship(
         TaskMemberOrm,
-        lazy="joined",
+        foreign_keys="TaskMemberOrm.team_id",
+        lazy="selectin",
         cascade="all, delete-orphan"
     )
 

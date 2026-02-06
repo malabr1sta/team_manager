@@ -42,20 +42,20 @@ class TaskMemberProtocol(Protocol):
 @runtime_checkable
 class TaskTeamProtocol(Protocol):
 
-    async def get_by_id(self, id: int) -> Team :
+    async def get_by_id(self, id: int) -> Team | None:
         ...
 
-    async def save(self, member: Team) -> Team:
+    async def save(self, team: Team) -> None:
         ...
 
 
 @runtime_checkable
 class TaskCommentProtocol(Protocol):
 
-    async def get_by_id(self, id: int) ->  list[Comment]:
+    async def get_by_task_id(self, task_id: int) ->  list[Comment]:
         ...
 
-    async def save(self, member: Comment) -> Comment:
+    async def save(self, comment: Comment) -> Comment:
         ...
 
 
