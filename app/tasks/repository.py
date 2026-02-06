@@ -35,3 +35,58 @@ class SQLAlchemyTaskUserRepository:
             return
         mappers.TaskUserMapper.update_orm(orm, user)
 
+
+class SQLAlchemyTaskMemberRepository:
+    """Implementing a member's repository"""
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def get_by_user(
+        self, user_id: int
+    ) -> list[models.MemberTask]:
+
+        result = await self.session.execute(
+            select(orm_models.TaskMemberOrm)
+            .where(orm_models.TaskMemberOrm.user_id == user_id)
+        )
+        orms = result.scalars().all()
+        return [mappers.TaskMemberMapper.to_domain(orm) for orm in orms]
+
+
+    async def get_by_user_and_team(
+        self,
+        user_id: int,
+        team_id: int
+    ) -> list[models.MemberTask]:
+
+        result = await self.session.execute(
+            select(orm_models.TaskMemberOrm)
+            .where(
+                orm_models.TaskMemberOrm.user_id == user_id,
+                orm_models.TaskMemberOrm.team_id == team_id
+            )
+        )
+        orms = result.scalars().all()
+        return [mappers.TaskMemberMapper.to_domain(orm) for orm in orms]
+
+
+    async def save(self, member: models.MemberTask) -> None:
+        result = await self.session.execute(
+            select(orm_models.TaskMemberOrm)
+            .where(
+                orm_models.TaskMemberOrm.user_id == member.user_id,
+                orm_models.TaskMemberOrm.team_id == member.team_id,
+                orm_models.TaskMemberOrm.role == member.role
+            )
+        )
+        orm = result.scalar_one_or_none()
+        if orm is None:
+            self.session.add(mappers.TaskMemberMapper.to_orm(member))
+            return
+        mappers.TaskMemberMapper.update_orm(orm, member)
+
+
+
+
+
+

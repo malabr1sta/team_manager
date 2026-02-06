@@ -49,9 +49,14 @@ class TaskMemberOrm(Base, IdMixin):
     role: Mapped[str] = mapped_column(String)
 
 
-class TaskTeamOrm(Base, IdMixin, TimestampMixin):
+class TaskTeamOrm(Base, TimestampMixin):
     __tablename__ = 'task_teams'
     __table_args__ = TABLE_ARGS
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+    )
 
     members = relationship(
         TaskMemberOrm,

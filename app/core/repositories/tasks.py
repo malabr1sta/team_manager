@@ -32,10 +32,10 @@ class TaskMemberProtocol(Protocol):
         self,
         user_id: int,
         team_id: int,
-    ) -> MemberTask | None:
+    ) -> list[MemberTask]:
         ...
 
-    async def save(self, member: MemberTask) -> MemberTask:
+    async def save(self, member: MemberTask) -> None:
         ...
 
 
