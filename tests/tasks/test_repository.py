@@ -112,7 +112,7 @@ async def test_save_updates_existing_member(async_session):
 
 @pytest.mark.anyio
 async def test_save_creates_multiple_roles_for_same_user_and_team(async_session):
-    """Проверяем, что пользователь может иметь несколько ролей в одной команде"""
+    """We check that a user can have multiple roles in one team"""
     repo = repository.SQLAlchemyTaskMemberRepository(async_session)
 
     member1 = models.MemberTask(
@@ -139,7 +139,7 @@ async def test_save_creates_multiple_roles_for_same_user_and_team(async_session)
 
 @pytest.mark.anyio
 async def test_get_by_user_returns_all_roles(async_session):
-    """Проверяем, что get_by_user возвращает все роли пользователя во всех командах"""
+    """We check that get_by_user returns all user roles in all commands"""
     repo = repository.SQLAlchemyTaskMemberRepository(async_session)
 
     member1 = models.MemberTask(
