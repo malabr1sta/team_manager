@@ -85,7 +85,7 @@ class SQLAlchemyTaskMemberRepository:
         mappers.TaskMemberMapper.update_orm(orm, member)
 
 
-class SQLAlchemyTeamMemberRepository:
+class SQLAlchemyTeamRepository:
     """Implementing a team's repository"""
     def __init__(self, session: AsyncSession):
         self.session = session

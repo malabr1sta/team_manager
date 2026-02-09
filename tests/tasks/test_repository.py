@@ -276,7 +276,7 @@ async def test_get_by_user_and_team_filters_correctly(async_session):
 
 @pytest.mark.anyio
 async def test_save_creates_new_team(async_session):
-    repo = repository.SQLAlchemyTeamMemberRepository(async_session)
+    repo = repository.SQLAlchemyTeamRepository(async_session)
     team = models.Team(
         id=ids.TeamId(100),
         members=[]
@@ -296,7 +296,7 @@ async def test_save_creates_new_team(async_session):
 
 @pytest.mark.anyio
 async def test_save_updates_existing_team(async_session):
-    repo = repository.SQLAlchemyTeamMemberRepository(async_session)
+    repo = repository.SQLAlchemyTeamRepository(async_session)
 
     team = models.Team(
         id=ids.TeamId(100),
@@ -338,7 +338,7 @@ async def test_save_updates_existing_team(async_session):
 
 @pytest.mark.anyio
 async def test_get_by_id_returns_team(async_session):
-    repo = repository.SQLAlchemyTeamMemberRepository(async_session)
+    repo = repository.SQLAlchemyTeamRepository(async_session)
 
     team = models.Team(
         id=ids.TeamId(200),
@@ -365,7 +365,7 @@ async def test_get_by_id_returns_team(async_session):
 
 @pytest.mark.anyio
 async def test_get_by_id_returns_none_if_not_found(async_session):
-    repo = repository.SQLAlchemyTeamMemberRepository(async_session)
+    repo = repository.SQLAlchemyTeamRepository(async_session)
 
     found_team = await repo.get_by_id(999)
 
@@ -374,7 +374,7 @@ async def test_get_by_id_returns_none_if_not_found(async_session):
 
 @pytest.mark.anyio
 async def test_save_team_with_multiple_members(async_session):
-    repo = repository.SQLAlchemyTeamMemberRepository(async_session)
+    repo = repository.SQLAlchemyTeamRepository(async_session)
 
     team = models.Team(
         id=ids.TeamId(300),
@@ -412,7 +412,7 @@ async def test_save_team_with_multiple_members(async_session):
 
 @pytest.mark.anyio
 async def test_save_team_with_empty_members(async_session):
-    repo = repository.SQLAlchemyTeamMemberRepository(async_session)
+    repo = repository.SQLAlchemyTeamRepository(async_session)
 
     team = models.Team(
         id=ids.TeamId(400),
@@ -431,7 +431,7 @@ async def test_save_team_with_empty_members(async_session):
 
 @pytest.mark.anyio
 async def test_save_multiple_teams_with_different_ids(async_session):
-    repo = repository.SQLAlchemyTeamMemberRepository(async_session)
+    repo = repository.SQLAlchemyTeamRepository(async_session)
 
     team1 = models.Team(
         id=ids.TeamId(100),
