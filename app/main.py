@@ -5,11 +5,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from app.deps import base as base_deps
 from app.core.infrastructure import event_bus
-from app.core.shared.events import teams as teams_event
-from app.tasks import (
-    handlers as task_handlers,
-    repository as task_repo
-)
+from app.core.register_handlers import register_event_handlers
 
 
 @asynccontextmanager
@@ -28,12 +24,10 @@ async def lifespan(app: FastAPI):
         engine, expire_on_commit=False
     )
     app.state.bus = event_bus.MemoryEventBus()
-    await app.state.bus.subscribe(
-        teams_event.TeamCreated,
-        task_handlers.TeamCreatedHandler(
-            task_repo.SQLAlchemyTeamRepository,
-            app.state.async_session
-        )
+
+    await register_event_handlers(
+        app.state.bus,
+        app.state.async_session
     )
 
     yield
