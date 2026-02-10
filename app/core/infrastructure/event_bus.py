@@ -1,6 +1,8 @@
 from collections import defaultdict
 from typing import Type
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.infrastructure.event import (
     DomainEvent,
     EventHandler,
@@ -26,8 +28,8 @@ class MemoryEventBus(EventBus):
         """Subscribe handler to event type."""
         self._handlers[event_type].append(handler)
 
-    async def publish(self, event: DomainEvent) -> None:
+    async def publish(self, event: DomainEvent, session: AsyncSession) -> None:
         """Publish event to all registered handlers."""
         for handler in self._handlers[type(event)]:
-            await handler.handle(event)
+            await handler.handle(event, session)
 

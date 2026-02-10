@@ -135,6 +135,7 @@ class SQLAlchemyTaskCommentRepository:
         orm_comment = result.scalar_one_or_none()
         if orm_comment is None:
             self.session.add(mappers.TaskCommentMapper.to_orm(comment))
+            await self.session.flush()
             return
         mappers.TaskCommentMapper.update_orm(orm_comment, comment)
 
@@ -188,5 +189,6 @@ class SQLAlchemyTaskRepository:
         task_orm = result.scalar_one_or_none()
         if task_orm is None:
             self.session.add(mappers.TaskMapper.to_orm(task))
+            await self.session.flush()
             return
         mappers.TaskMapper.update_orm(task_orm, task)

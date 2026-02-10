@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from app.core.custom_types import ids, role
 from app.core.entity import Entity
 from app.teams import custom_exception
+from app.core.shared.events import teams as team_event
 
 
 @dataclass(frozen=True)
@@ -24,6 +25,15 @@ class Team(Entity):
         self._id = id
         self._members = members if members is not None else []
         self._name = name
+        self._events: list[team_event.TeamCreated] = []
+
+    def record_event(self, event: team_event.TeamCreated) -> None:
+        self._events.append(event)
+
+    def pull_events(self) -> list[team_event.TeamCreated]:
+        events = self._events[:]
+        self._events.clear()
+        return events
 
     @property
     def id(self) -> ids.TeamId | None:

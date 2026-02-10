@@ -1,6 +1,8 @@
 from typing import Type, TypeVar, Generic
 from abc import ABC, abstractmethod
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class DomainEvent(ABC):
     """Protocol for all domain events."""
@@ -14,7 +16,7 @@ class EventHandler(ABC, Generic[TEvent]):
     """Protocol for event handlers."""
 
     @abstractmethod
-    async def handle(self, event: TEvent) -> None:
+    async def handle(self, event: TEvent, session: AsyncSession) -> None:
         """Handle domain event."""
         ...
 
@@ -23,7 +25,7 @@ class EventBus(ABC):
     """Protocol for event bus."""
 
     @abstractmethod
-    async def publish(self, event: DomainEvent) -> None:
+    async def publish(self, event: DomainEvent, session: AsyncSession) -> None:
         """Publish event to all subscribers."""
         ...
 

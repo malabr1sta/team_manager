@@ -3,12 +3,25 @@ from abc import ABC, abstractmethod
 from app.teams.models import Member, Team
 from app.teams import custom_exception
 from app.core.custom_types import ids, role
+from app.core.shared.events import teams as team_event
 
 
 def create_team(user_id: ids.UserId, team_id: ids.TeamId, name: str = "") -> Team:
     """Funtions for create team"""
     admin = Member(user_id, team_id, role.UserRole.ADMIN)
     return Team(team_id, [admin], name)
+
+
+def make_team_created_event(team: Team) -> None:
+    """
+    Create TeamCreated event with correct team_id
+    and append it to the team's event list.
+    """
+    if team.id is None:
+        raise ValueError("Team ID must be set before creating TeamCreated")
+
+    event = team_event.TeamCreated(team_id=team.id)
+    team.record_event(event)
 
 
 class TeamManagement(ABC):

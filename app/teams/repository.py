@@ -1,9 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.core.infrastructure.event import EventBus
-from app.core.custom_types import ids
-from app.core.shared.events import teams as teams_event
 from app.teams import (
     models,
     orm_models,
@@ -63,6 +60,7 @@ class SQLAlchemyMemberRepository:
         if orm_model is None:
             orm_member = mappers.MemberMapper.to_orm(member)
             self.session.add(orm_member)
+            await self.session.flush()
         else:
             mappers.MemberMapper.update_orm(orm_model, member)
 
@@ -70,9 +68,8 @@ class SQLAlchemyMemberRepository:
 class SQLAlchemyTeamRepository:
     """Implementing a team's repository"""
 
-    def __init__(self, session: AsyncSession, bus: EventBus):
+    def __init__(self, session: AsyncSession):
         self.session = session
-        self.bus = bus
 
     async def get_by_id(self, team_id: int) -> models.Team | None:
         result = await self.session.execute(
@@ -87,11 +84,6 @@ class SQLAlchemyTeamRepository:
             orm_team = mappers.TeamMapper.to_orm(team)
             self.session.add(orm_team)
             await self.session.flush()
-            await self.bus.publish(
-                teams_event.TeamCreated(
-                    team_id=ids.TeamId(orm_team.id)
-                )
-            )
         else:
             result = await self.session.execute(
                 select(orm_models.TeamOrm)
