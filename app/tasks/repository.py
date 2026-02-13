@@ -1,6 +1,6 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from app.core.repositories.base import AbstractRepository
 from app.tasks import (
     models,
     orm_models,
@@ -8,10 +8,8 @@ from app.tasks import (
 )
 
 
-class SQLAlchemyTaskUserRepository:
+class SQLAlchemyTaskUserRepository(AbstractRepository[models.TaskUser]):
     """Implementing a user's repository"""
-    def __init__(self, session: AsyncSession):
-        self.session = session
 
     async def get_by_id(self, id: int) -> models.TaskUser | None:
         result = await self.session.execute(
@@ -23,22 +21,20 @@ class SQLAlchemyTaskUserRepository:
             return None
         return mappers.TaskUserMapper.to_domain(user)
 
-    async def save(self, user: models.TaskUser):
+    async def save(self, domain: models.TaskUser):
         result = await self.session.execute(
             select(orm_models.TaskUserOrm)
-            .where(orm_models.TaskUserOrm.id == user.id)
+            .where(orm_models.TaskUserOrm.id == domain.id)
         )
         orm = result.scalar_one_or_none()
         if orm is None:
-            self.session.add(mappers.TaskUserMapper.to_orm(user))
+            self.session.add(mappers.TaskUserMapper.to_orm(domain))
             return
-        mappers.TaskUserMapper.update_orm(orm, user)
+        mappers.TaskUserMapper.update_orm(orm, domain)
 
 
-class SQLAlchemyTaskMemberRepository:
+class SQLAlchemyTaskMemberRepository(AbstractRepository[models.MemberTask]):
     """Implementing a member's repository"""
-    def __init__(self, session: AsyncSession):
-        self.session = session
 
     async def get_by_user(
         self, user_id: int
@@ -69,26 +65,24 @@ class SQLAlchemyTaskMemberRepository:
         return [mappers.TaskMemberMapper.to_domain(orm) for orm in orms]
 
 
-    async def save(self, member: models.MemberTask) -> None:
+    async def save(self, domain: models.MemberTask) -> None:
         result = await self.session.execute(
             select(orm_models.TaskMemberOrm)
             .where(
-                orm_models.TaskMemberOrm.user_id == member.user_id,
-                orm_models.TaskMemberOrm.team_id == member.team_id,
-                orm_models.TaskMemberOrm.role == member.role
+                orm_models.TaskMemberOrm.user_id == domain.user_id,
+                orm_models.TaskMemberOrm.team_id == domain.team_id,
+                orm_models.TaskMemberOrm.role == domain.role
             )
         )
         orm = result.scalar_one_or_none()
         if orm is None:
-            self.session.add(mappers.TaskMemberMapper.to_orm(member))
+            self.session.add(mappers.TaskMemberMapper.to_orm(domain))
             return
-        mappers.TaskMemberMapper.update_orm(orm, member)
+        mappers.TaskMemberMapper.update_orm(orm, domain)
 
 
-class SQLAlchemyTeamRepository:
+class SQLAlchemyTeamRepository(AbstractRepository[models.Team]):
     """Implementing a team's repository"""
-    def __init__(self, session: AsyncSession):
-        self.session = session
 
     async def get_by_id(self, id: int) -> models.Team | None:
         result = await self.session.execute(
@@ -100,23 +94,21 @@ class SQLAlchemyTeamRepository:
             return
         return mappers.TaskTeamMapper.to_domain(orm_team)
 
-    async def save(self, team: models.Team) -> None:
+    async def save(self, domain: models.Team) -> None:
         result = await self.session.execute(
             select(orm_models.TaskTeamOrm)
-            .where(orm_models.TaskTeamOrm.id == team.id)
+            .where(orm_models.TaskTeamOrm.id == domain.id)
         )
         orm_team = result.scalar_one_or_none()
         if orm_team is None:
-            self.session.add(mappers.TaskTeamMapper.to_orm(team))
+            self.session.add(mappers.TaskTeamMapper.to_orm(domain))
             return
-        mappers.TaskTeamMapper.update_orm(orm_team, team)
+        mappers.TaskTeamMapper.update_orm(orm_team, domain)
 
 
 
-class SQLAlchemyTaskCommentRepository:
+class SQLAlchemyTaskCommentRepository(AbstractRepository[models.Comment]):
     """Implementing a comment's repository"""
-    def __init__(self, session: AsyncSession):
-        self.session = session
 
     async def get_by_task_id(self, task_id: int) ->  list[models.Comment]:
         result = await self.session.execute(
@@ -126,24 +118,22 @@ class SQLAlchemyTaskCommentRepository:
         orms = result.scalars().all()
         return [mappers.TaskCommentMapper.to_domain(orm) for orm in orms]
 
-    async def save(self, comment: models.Comment) -> None:
+    async def save(self, domain: models.Comment) -> None:
         result = await self.session.execute(
             select(orm_models.CommentOrm)
-            .where(orm_models.CommentOrm.id == comment.id)
+            .where(orm_models.CommentOrm.id == domain.id)
         )
 
         orm_comment = result.scalar_one_or_none()
         if orm_comment is None:
-            self.session.add(mappers.TaskCommentMapper.to_orm(comment))
+            self.session.add(mappers.TaskCommentMapper.to_orm(domain))
             await self.session.flush()
             return
-        mappers.TaskCommentMapper.update_orm(orm_comment, comment)
+        mappers.TaskCommentMapper.update_orm(orm_comment, domain)
 
 
-class SQLAlchemyTaskRepository:
+class SQLAlchemyTaskRepository(AbstractRepository[models.Task]):
     """Implementing a task's repository"""
-    def __init__(self, session: AsyncSession):
-        self.session = session
 
     async def get_by_id(self, id: int) -> models.Task | None:
         result = await self.session.execute(
@@ -181,14 +171,14 @@ class SQLAlchemyTaskRepository:
         tasks_orm = result.scalars().all()
         return [mappers.TaskMapper.to_domain(task) for task in tasks_orm]
 
-    async def save(self, task: models.Task) -> None:
+    async def save(self, domain: models.Task) -> None:
         result = await self.session.execute(
             select(orm_models.TaskOrm)
-            .where(orm_models.TaskOrm.id == task.id)
+            .where(orm_models.TaskOrm.id == domain.id)
         )
         task_orm = result.scalar_one_or_none()
         if task_orm is None:
-            self.session.add(mappers.TaskMapper.to_orm(task))
+            self.session.add(mappers.TaskMapper.to_orm(domain))
             await self.session.flush()
             return
-        mappers.TaskMapper.update_orm(task_orm, task)
+        mappers.TaskMapper.update_orm(task_orm, domain)

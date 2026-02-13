@@ -1,28 +1,23 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from app.core.repositories.base import AbstractRepository
 from app.teams import (
     models,
     orm_models,
     mappers
 )
 
-class SQLAlchemyUserRepository:
+class SQLAlchemyUserRepository(AbstractRepository[models.User]):
     """Implementing a user's repository"""
-    def __init__(self, session: AsyncSession):
-        self.session = session
 
-    async def save(self, id: int):
+    async def save(self, domain: models.User):
         self.session.add(
-            orm_models.TeamUserOrm(id=id)
+            orm_models.TeamUserOrm(id=domain.id)
         )
 
 
-class SQLAlchemyMemberRepository:
+class SQLAlchemyMemberRepository(AbstractRepository[models.Member]):
     """Implementing a member's repository"""
-
-    def __init__(self, session: AsyncSession):
-        self.session = session
 
     async def get_by_user(self, user_id: int) -> list[models.Member]:
         result = await self.session.execute(
@@ -48,28 +43,25 @@ class SQLAlchemyMemberRepository:
         orm_model = result.scalar_one_or_none()
         return mappers.MemberMapper.to_domain(orm_model) if orm_model else None
 
-    async def save(self, member: models.Member):
+    async def save(self, domain: models.Member):
         result = await self.session.execute(
             select(orm_models.MemberOrm)
             .where(
-                orm_models.MemberOrm.user_id == member.user_id,
-                orm_models.MemberOrm.team_id == member.team_id
+                orm_models.MemberOrm.user_id == domain.user_id,
+                orm_models.MemberOrm.team_id == domain.team_id
             )
         )
         orm_model = result.scalar_one_or_none()
         if orm_model is None:
-            orm_member = mappers.MemberMapper.to_orm(member)
+            orm_member = mappers.MemberMapper.to_orm(domain)
             self.session.add(orm_member)
             await self.session.flush()
         else:
-            mappers.MemberMapper.update_orm(orm_model, member)
+            mappers.MemberMapper.update_orm(orm_model, domain)
 
 
-class SQLAlchemyTeamRepository:
+class SQLAlchemyTeamRepository(AbstractRepository[models.Team]):
     """Implementing a team's repository"""
-
-    def __init__(self, session: AsyncSession):
-        self.session = session
 
     async def get_by_id(self, team_id: int) -> models.Team | None:
         result = await self.session.execute(
@@ -79,15 +71,16 @@ class SQLAlchemyTeamRepository:
         orm_model = result.scalar_one_or_none()
         return mappers.TeamMapper.to_domain(orm_model) if orm_model else None
 
-    async def save(self, team: models.Team):
-        if team.id is None:
-            orm_team = mappers.TeamMapper.to_orm(team)
+    async def save(self, domain: models.Team):
+        if domain.id is None:
+            orm_team = mappers.TeamMapper.to_orm(domain)
             self.session.add(orm_team)
             await self.session.flush()
+            self.uow._seen.add(domain)
         else:
             result = await self.session.execute(
                 select(orm_models.TeamOrm)
-                .where(orm_models.TeamOrm.id == team.id)
+                .where(orm_models.TeamOrm.id == domain.id)
             )
             orm_model = result.scalar_one()
-            mappers.TeamMapper.update_orm(orm_model, team)
+            mappers.TeamMapper.update_orm(orm_model, domain)

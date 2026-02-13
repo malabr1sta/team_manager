@@ -1,13 +1,10 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.shared.events import teams as team_event
-from app.core.repositories import tasks
 from app.core.custom_types import ids
 from app.core.infrastructure.event import EventHandler
 from app.tasks.models import Team
-
-from typing import Type
-
+from app.tasks.unit_of_work import (
+        TaskSQLAlchemyUnitOfWork
+)
 
 
 class TeamCreatedHandler(EventHandler[team_event.TeamCreated]):
@@ -15,16 +12,13 @@ class TeamCreatedHandler(EventHandler[team_event.TeamCreated]):
 
     def __init__(
             self,
-            type_repo: Type[tasks.TaskTeamProtocol],
+            uow: TaskSQLAlchemyUnitOfWork,
     ):
-        self.type_repo = type_repo
+        self.uow = uow
 
-    async def handle(
-        self,
-        event: team_event.TeamCreated,
-        session: AsyncSession
-    ) -> None:
+
+    async def handle(self, event: team_event.TeamCreated) -> None:
         """Create TaskTeam when Team is created."""
-        repo = self.type_repo(session)
-        team = Team(ids.TeamId(event.team_id), [])
-        await repo.save(team)
+        async with self.uow as uow:
+            team = Team(ids.TeamId(event.team_id), [])
+            await uow.repos.team.save(team)

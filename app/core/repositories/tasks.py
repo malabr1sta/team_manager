@@ -1,7 +1,5 @@
 from typing import Protocol, runtime_checkable
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.tasks.models import (
     MemberTask,
     TaskUser,
@@ -15,7 +13,7 @@ from app.tasks.models import (
 class TaskUserProtocol(Protocol):
     """Protocol user's repository"""
 
-    async def save(self, user: TaskUser) -> TaskUser:
+    async def save(self, user: TaskUser) -> None:
         ...
 
     async def get_by_id(self, id: int) -> TaskUser | None:
@@ -43,9 +41,6 @@ class TaskMemberProtocol(Protocol):
 
 @runtime_checkable
 class TaskTeamProtocol(Protocol):
-
-    def __init__(self, session: AsyncSession):
-        ...
 
     async def get_by_id(self, id: int) -> Team | None:
         ...

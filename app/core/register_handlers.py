@@ -2,11 +2,17 @@ from app.core.shared.events import teams as team_event
 from app.core.infrastructure.event import EventBus
 from app.tasks import (
     repository as tasks_repo,
-    handlers as tasks_handlers
+    handlers as tasks_handlers,
+    unit_of_work as tasks_uow
 )
 
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-async def register_event_handlers(bus: EventBus):
+
+async def register_event_handlers(
+        bus: EventBus,
+        session_factory: async_sessionmaker[AsyncSession]
+):
     """
     Register all domain event handlers to the given EventBus.
 
@@ -21,8 +27,12 @@ async def register_event_handlers(bus: EventBus):
     """
     handlers_map = {
         team_event.TeamCreated: [
+
             tasks_handlers.TeamCreatedHandler(
-                tasks_repo.SQLAlchemyTeamRepository
+                tasks_uow.TaskSQLAlchemyUnitOfWork(
+                    session_factory, bus, tasks_uow.TaskRepositoryProvider
+                ),
+
             ),
         ],
     }

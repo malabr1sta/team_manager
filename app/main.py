@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
     )
     app.state.bus = event_bus.MemoryEventBus()
 
-    await register_event_handlers(app.state.bus)
+    await register_event_handlers(app.state.bus, app.state.async_session)
 
     yield
 
