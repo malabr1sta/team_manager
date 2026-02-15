@@ -1,7 +1,6 @@
 from app.core.shared.events import teams as team_event
 from app.core.infrastructure.event import EventBus
 from app.tasks import (
-    repository as tasks_repo,
     handlers as tasks_handlers,
     unit_of_work as tasks_uow
 )

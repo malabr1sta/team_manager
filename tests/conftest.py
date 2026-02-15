@@ -1,13 +1,11 @@
-import os
 import pytest
 from sqlalchemy.ext.asyncio import (
         create_async_engine,
         async_sessionmaker,
 )
 from app.core.database import Base
-
-
-Base.USE_SCHEMA = False
+from app.core.infrastructure.event_bus import MemoryEventBus
+from app.core.register_handlers import register_event_handlers
 
 
 @pytest.fixture(scope="function")
@@ -21,6 +19,20 @@ async def engine():
         await conn.run_sync(Base.metadata.create_all)
     yield engine
     await engine.dispose()
+
+
+@pytest.fixture(scope="function")
+async def async_session_factory(engine):
+    """Create session factory for tests."""
+    return async_sessionmaker(engine, expire_on_commit=False)
+
+
+@pytest.fixture(scope="function")
+def event_bus():
+    """Create event bus for tests."""
+    bus = MemoryEventBus()
+    yield bus
+    bus._handlers.clear()
 
 
 @pytest.fixture

@@ -2,11 +2,17 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "team_manager"
+    app_name: str | None = None
     database_user: str | None = None
     database_password: str | None = None
     database_name: str | None = None
     database_host: str | None = None
     database_port: int | None = None
-    redis_password: str | None = None
+    test: bool | None = None
     model_config = SettingsConfigDict(env_file="././.env")
+
+    @property
+    def use_schema(self) -> bool:
+        """Use database schema
+        (False for SQLite in tests, True for PostgreSQL in prod)"""
+        return not self.test

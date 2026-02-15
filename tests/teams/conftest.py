@@ -1,8 +1,13 @@
 import pytest
-from datetime import datetime, timezone, timedelta
+from typing import AsyncGenerator
 
 from app.teams import models as teams_models
 from app.core.custom_types import role, ids
+from app.teams.unit_of_work import (
+    TeamSQLAlchemyUnitOfWork,
+    TeamRepositoryProvider
+)
+
 
 
 @pytest.fixture
@@ -18,3 +23,23 @@ def new_member() -> teams_models.Member:
     return teams_models.Member(
         ids.UserId(2), ids.TeamId(1), role.UserRole.MEMBER
     )
+
+
+@pytest.fixture(scope="function")
+def teams_uow_factory(async_session_factory, event_bus):
+    """Factory for Tasks UnitOfWork."""
+
+    return TeamSQLAlchemyUnitOfWork(
+        session_factory=async_session_factory,
+        bus=event_bus,
+        provider_cls=TeamRepositoryProvider
+    )
+
+
+@pytest.fixture
+async def teams_uow(
+        teams_uow_factory
+) -> AsyncGenerator[TeamSQLAlchemyUnitOfWork, None]:
+    """Tasks UnitOfWork with automatic context."""
+    async with teams_uow_factory as uow:
+        yield uow

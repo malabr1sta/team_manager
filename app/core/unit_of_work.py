@@ -18,6 +18,22 @@ class AbstractUnitOfWork(ABC):
     def __init__(self):
         """Initialize the set of tracked aggregates."""
         self._seen: set[AggregateRoot] = set()
+        self._session: AsyncSession
+
+    @property
+    def session(self) -> AsyncSession:
+        """Access session through UnitOfWork.
+
+        Raises:
+            RuntimeError: If accessed outside async context.
+        """
+        if not hasattr(self, '_session') or self._session is None:
+            raise RuntimeError(
+                "Session not available. "
+                "Make sure you're using the repository within "
+                "a UnitOfWork context (async with uow: ...)"
+            )
+        return self._session
 
     async def commit(self) -> None:
         """Commit the transaction and publish domain events."""
@@ -35,13 +51,13 @@ class AbstractUnitOfWork(ABC):
         ...
 
 
+
 class AbstractSqlRepositoryProvider(ABC):
     """Base interface for SQL repository providers."""
 
-    @abstractmethod
-    def __init__(self, session: AsyncSession, uow: AbstractUnitOfWork):
+    def __init__(self, uow: AbstractUnitOfWork):
         """Initialize the provider with a session and unit of work."""
-        ...
+        self.uow = uow
 
 
 TProvider = TypeVar('TProvider', bound=AbstractSqlRepositoryProvider)
@@ -66,8 +82,8 @@ class SQLAlchemyUnitOfWork(Generic[TProvider], AbstractUnitOfWork, ABC):
 
     async def __aenter__(self) -> "SQLAlchemyUnitOfWork[TProvider]":
         """Enter async context: create session and repositories."""
-        self.session = self._session_factory()
-        self.repos = self.provider_cls(self.session, self)
+        self._session = self._session_factory()
+        self.repos = self.provider_cls(self)
         return self
 
     async def __aexit__(self, exc_type, exc, tb):

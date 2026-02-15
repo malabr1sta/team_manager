@@ -1,4 +1,5 @@
 from app.core.database import Base, IdMixin, TimestampMixin
+from app.deps.base import get_settings
 
 from sqlalchemy.orm import (
     relationship,
@@ -8,11 +9,13 @@ from sqlalchemy.orm import (
 from sqlalchemy import String, Integer, ForeignKey
 
 
-SCHEMA = "teams"
-TEAM_FK = f"{SCHEMA}.teams.id" if Base.USE_SCHEMA else "teams.id"
-USER_FK = f"{SCHEMA}.teams_user.id" if Base.USE_SCHEMA else "teams_user.id"
+settings = get_settings()
 
-TABLE_ARGS = {"schema": SCHEMA} if Base.USE_SCHEMA else {}
+SCHEMA = "teams"
+TEAM_FK = f"{SCHEMA}.teams.id" if settings.use_schema else "teams.id"
+USER_FK = f"{SCHEMA}.teams_user.id" if settings.use_schema else "teams_user.id"
+
+TABLE_ARGS = {"schema": SCHEMA} if settings.use_schema else {}
 
 
 class TeamUserOrm(Base, TimestampMixin):

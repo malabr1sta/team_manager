@@ -6,14 +6,18 @@ from app.teams import (
     models,
     orm_models,
     mappers,
-    repository
 )
 from app.core.custom_types import ids, role
+from app.teams.unit_of_work import (
+    TeamSQLAlchemyUnitOfWork
+)
+
 
 
 @pytest.mark.anyio
-async def test_get_by_id(async_session):
-    repo = repository.SQLAlchemyTeamRepository(async_session)
+async def test_get_by_id(teams_uow: TeamSQLAlchemyUnitOfWork):
+    repo = teams_uow.repos.team
+    async_session = teams_uow.session
 
     team_domain = models.Team(
         id=None,
@@ -48,8 +52,9 @@ async def test_get_by_id(async_session):
 
 
 @pytest.mark.anyio
-async def test_save_creates_team(async_session):
-    repo = repository.SQLAlchemyTeamRepository(async_session)
+async def test_save_creates_team(teams_uow: TeamSQLAlchemyUnitOfWork):
+    repo = teams_uow.repos.team
+    async_session = teams_uow.session
 
     team_domain = models.Team(
         id=None,
@@ -88,8 +93,11 @@ async def test_save_creates_team(async_session):
 
 
 @pytest.mark.anyio
-async def test_get_by_user_returns_all_members(async_session):
-    repo = repository.SQLAlchemyMemberRepository(async_session)
+async def test_get_by_user_returns_all_members(
+        teams_uow: TeamSQLAlchemyUnitOfWork
+):
+    repo = teams_uow.repos.member
+    async_session = teams_uow.session
 
     orm_members = [
         orm_models.MemberOrm(
@@ -120,8 +128,9 @@ async def test_get_by_user_returns_all_members(async_session):
 
 
 @pytest.mark.anyio
-async def test_get_by_user_and_team(async_session):
-    repo = repository.SQLAlchemyMemberRepository(async_session)
+async def test_get_by_user_and_team(teams_uow: TeamSQLAlchemyUnitOfWork):
+    repo = teams_uow.repos.member
+    async_session = teams_uow.session
 
     orm_member = orm_models.MemberOrm(
         user_id=1,
@@ -144,8 +153,10 @@ async def test_get_by_user_and_team(async_session):
 
 
 @pytest.mark.anyio
-async def test_get_by_user_and_team_returns_none(async_session):
-    repo = repository.SQLAlchemyMemberRepository(async_session)
+async def test_get_by_user_and_team_returns_none(
+        teams_uow: TeamSQLAlchemyUnitOfWork
+):
+    repo = teams_uow.repos.member
 
     member = await repo.get_by_user_and_team(
         user_id=999,
@@ -156,8 +167,9 @@ async def test_get_by_user_and_team_returns_none(async_session):
 
 
 @pytest.mark.anyio
-async def test_save_creates_member(async_session):
-    repo = repository.SQLAlchemyMemberRepository(async_session)
+async def test_save_creates_member(teams_uow: TeamSQLAlchemyUnitOfWork):
+    repo = teams_uow.repos.member
+    async_session = teams_uow.session
 
     member = models.Member(
         user_id=ids.UserId(1),
@@ -180,8 +192,11 @@ async def test_save_creates_member(async_session):
 
 
 @pytest.mark.anyio
-async def test_save_updates_existing_member(async_session):
-    repo = repository.SQLAlchemyMemberRepository(async_session)
+async def test_save_updates_existing_member(
+        teams_uow: TeamSQLAlchemyUnitOfWork
+):
+    repo = teams_uow.repos.member
+    async_session = teams_uow.session
 
     orm_member = orm_models.MemberOrm(
         user_id=1,
@@ -214,10 +229,12 @@ async def test_save_updates_existing_member(async_session):
 
 
 @pytest.mark.anyio
-async def test_user_repository_save(async_session):
-    repo = repository.SQLAlchemyUserRepository(async_session)
+async def test_user_repository_save(teams_uow: TeamSQLAlchemyUnitOfWork):
+    repo = teams_uow.repos.user
+    async_session = teams_uow.session
 
-    await repo.save(id=1)
+    user = models.User(ids.UserId(1))
+    await repo.save(user)
     await async_session.commit()
 
     result = await async_session.execute(select(orm_models.TeamUserOrm))
@@ -226,7 +243,8 @@ async def test_user_repository_save(async_session):
     assert len(users) == 1
     assert users[0].id == 1
 
-    await repo.save(id=2)
+    user_2 = models.User(ids.UserId(2))
+    await repo.save(user_2)
     await async_session.commit()
 
     result = await async_session.execute(select(orm_models.TeamUserOrm))

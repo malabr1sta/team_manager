@@ -7,12 +7,15 @@ from app.tasks import (
     orm_models,
     repository
 )
+from app.tasks.unit_of_work import TaskSQLAlchemyUnitOfWork
+
 from app.core.custom_types import ids, role
 
 
 @pytest.mark.anyio
-async def test_save_creates_new_user(async_session):
-    repo = repository.SQLAlchemyTaskUserRepository(async_session)
+async def test_save_creates_new_user(tasks_uow: TaskSQLAlchemyUnitOfWork):
+    repo = tasks_uow.repos.user
+    async_session = tasks_uow.session
 
     user = models.TaskUser(
         id=ids.UserId(1),
@@ -33,8 +36,8 @@ async def test_save_creates_new_user(async_session):
 
 
 @pytest.mark.anyio
-async def test_get_user(async_session):
-    repo = repository.SQLAlchemyTaskUserRepository(async_session)
+async def test_get_user(tasks_uow: TaskSQLAlchemyUnitOfWork):
+    repo = tasks_uow.repos.user
 
     user = models.TaskUser(
         id=ids.UserId(1),
@@ -50,8 +53,10 @@ async def test_get_user(async_session):
 
 
 @pytest.mark.anyio
-async def test_save_creates_new_member(async_session):
-    repo = repository.SQLAlchemyTaskMemberRepository(async_session)
+async def test_save_creates_new_member(tasks_uow: TaskSQLAlchemyUnitOfWork):
+    repo = tasks_uow.repos.member
+    async_session = tasks_uow.session
+
     member = models.MemberTask(
         user_id=ids.UserId(1),
         team_id=ids.TeamId(1),
@@ -76,8 +81,11 @@ async def test_save_creates_new_member(async_session):
 
 
 @pytest.mark.anyio
-async def test_save_updates_existing_member(async_session):
-    repo = repository.SQLAlchemyTaskMemberRepository(async_session)
+async def test_save_updates_existing_member(
+        tasks_uow: TaskSQLAlchemyUnitOfWork
+):
+    repo = tasks_uow.repos.member
+    async_session = tasks_uow.session
 
     member = models.MemberTask(
         user_id=ids.UserId(1),
@@ -110,9 +118,12 @@ async def test_save_updates_existing_member(async_session):
 
 
 @pytest.mark.anyio
-async def test_save_creates_multiple_roles_for_same_user_and_team(async_session):
+async def test_save_creates_multiple_roles_for_same_user_and_team(
+        tasks_uow: TaskSQLAlchemyUnitOfWork
+):
     """We check that a user can have multiple roles in one team"""
-    repo = repository.SQLAlchemyTaskMemberRepository(async_session)
+    repo = tasks_uow.repos.member
+    async_session = tasks_uow.session
 
     member1 = models.MemberTask(
         user_id=ids.UserId(1),
@@ -137,9 +148,12 @@ async def test_save_creates_multiple_roles_for_same_user_and_team(async_session)
 
 
 @pytest.mark.anyio
-async def test_get_by_user_returns_all_roles(async_session):
+async def test_get_by_user_returns_all_roles(
+        tasks_uow: TaskSQLAlchemyUnitOfWork
+):
     """We check that get_by_user returns all user roles in all commands"""
-    repo = repository.SQLAlchemyTaskMemberRepository(async_session)
+    repo = tasks_uow.repos.member
+    async_session = tasks_uow.session
 
     member1 = models.MemberTask(
         user_id=ids.UserId(1),
@@ -168,8 +182,9 @@ async def test_get_by_user_returns_all_roles(async_session):
 
 
 @pytest.mark.anyio
-async def test_get_by_user(async_session):
-    repo = repository.SQLAlchemyTaskMemberRepository(async_session)
+async def test_get_by_user(tasks_uow: TaskSQLAlchemyUnitOfWork):
+    repo = tasks_uow.repos.member
+    async_session = tasks_uow.session
 
     member1 = models.MemberTask(
         user_id=ids.UserId(1),
@@ -195,8 +210,8 @@ async def test_get_by_user(async_session):
 
 
 @pytest.mark.anyio
-async def test_get_by_user_empty_result(async_session):
-    repo = repository.SQLAlchemyTaskMemberRepository(async_session)
+async def test_get_by_user_empty_result(tasks_uow: TaskSQLAlchemyUnitOfWork):
+    repo = tasks_uow.repos.member
 
     members = await repo.get_by_user(999)
 
@@ -204,8 +219,9 @@ async def test_get_by_user_empty_result(async_session):
 
 
 @pytest.mark.anyio
-async def test_get_by_user_and_team(async_session):
-    repo = repository.SQLAlchemyTaskMemberRepository(async_session)
+async def test_get_by_user_and_team(tasks_uow: TaskSQLAlchemyUnitOfWork):
+    repo = tasks_uow.repos.member
+    async_session = tasks_uow.session
 
     member = models.MemberTask(
         user_id=ids.UserId(1),
@@ -225,8 +241,11 @@ async def test_get_by_user_and_team(async_session):
 
 
 @pytest.mark.anyio
-async def test_get_by_user_and_team_empty_result(async_session):
-    repo = repository.SQLAlchemyTaskMemberRepository(async_session)
+async def test_get_by_user_and_team_empty_result(
+        tasks_uow: TaskSQLAlchemyUnitOfWork
+):
+    repo = tasks_uow.repos.member
+    async_session = tasks_uow.session
 
     member = models.MemberTask(
         user_id=ids.UserId(1),
@@ -243,8 +262,11 @@ async def test_get_by_user_and_team_empty_result(async_session):
 
 
 @pytest.mark.anyio
-async def test_get_by_user_and_team_filters_correctly(async_session):
-    repo = repository.SQLAlchemyTaskMemberRepository(async_session)
+async def test_get_by_user_and_team_filters_correctly(
+        tasks_uow: TaskSQLAlchemyUnitOfWork
+):
+    repo = tasks_uow.repos.member
+    async_session = tasks_uow.session
 
     member1 = models.MemberTask(
         user_id=ids.UserId(1),
@@ -275,8 +297,12 @@ async def test_get_by_user_and_team_filters_correctly(async_session):
 
 
 @pytest.mark.anyio
-async def test_save_creates_new_team(async_session):
-    repo = repository.SQLAlchemyTeamRepository(async_session)
+async def test_save_creates_new_team(
+        tasks_uow: TaskSQLAlchemyUnitOfWork
+):
+    repo = tasks_uow.repos.team
+    async_session = tasks_uow.session
+
     team = models.Team(
         id=ids.TeamId(100),
         members=[]
@@ -295,8 +321,9 @@ async def test_save_creates_new_team(async_session):
 
 
 @pytest.mark.anyio
-async def test_save_updates_existing_team(async_session):
-    repo = repository.SQLAlchemyTeamRepository(async_session)
+async def test_save_updates_existing_team(tasks_uow: TaskSQLAlchemyUnitOfWork):
+    repo = tasks_uow.repos.team
+    async_session = tasks_uow.session
 
     team = models.Team(
         id=ids.TeamId(100),
@@ -337,8 +364,9 @@ async def test_save_updates_existing_team(async_session):
 
 
 @pytest.mark.anyio
-async def test_get_by_id_returns_team(async_session):
-    repo = repository.SQLAlchemyTeamRepository(async_session)
+async def test_get_by_id_returns_team(tasks_uow: TaskSQLAlchemyUnitOfWork):
+    repo = tasks_uow.repos.team
+    async_session = tasks_uow.session
 
     team = models.Team(
         id=ids.TeamId(200),
@@ -364,8 +392,10 @@ async def test_get_by_id_returns_team(async_session):
 
 
 @pytest.mark.anyio
-async def test_get_by_id_returns_none_if_not_found(async_session):
-    repo = repository.SQLAlchemyTeamRepository(async_session)
+async def test_get_by_id_returns_none_if_not_found(
+        tasks_uow: TaskSQLAlchemyUnitOfWork
+):
+    repo = tasks_uow.repos.team
 
     found_team = await repo.get_by_id(999)
 
@@ -373,8 +403,11 @@ async def test_get_by_id_returns_none_if_not_found(async_session):
 
 
 @pytest.mark.anyio
-async def test_save_team_with_multiple_members(async_session):
-    repo = repository.SQLAlchemyTeamRepository(async_session)
+async def test_save_team_with_multiple_members(
+        tasks_uow: TaskSQLAlchemyUnitOfWork
+):
+    repo = tasks_uow.repos.team
+    async_session = tasks_uow.session
 
     team = models.Team(
         id=ids.TeamId(300),
@@ -411,8 +444,11 @@ async def test_save_team_with_multiple_members(async_session):
 
 
 @pytest.mark.anyio
-async def test_save_team_with_empty_members(async_session):
-    repo = repository.SQLAlchemyTeamRepository(async_session)
+async def test_save_team_with_empty_members(
+        tasks_uow: TaskSQLAlchemyUnitOfWork
+):
+    repo = tasks_uow.repos.team
+    async_session = tasks_uow.session
 
     team = models.Team(
         id=ids.TeamId(400),
@@ -430,8 +466,11 @@ async def test_save_team_with_empty_members(async_session):
 
 
 @pytest.mark.anyio
-async def test_save_multiple_teams_with_different_ids(async_session):
-    repo = repository.SQLAlchemyTeamRepository(async_session)
+async def test_save_multiple_teams_with_different_ids(
+        tasks_uow: TaskSQLAlchemyUnitOfWork
+):
+    repo = tasks_uow.repos.team
+    async_session = tasks_uow.session
 
     team1 = models.Team(
         id=ids.TeamId(100),
@@ -456,8 +495,10 @@ async def test_save_multiple_teams_with_different_ids(async_session):
 
 
 @pytest.mark.anyio
-async def test_save_creates_new_comment(async_session):
-    repo = repository.SQLAlchemyTaskCommentRepository(async_session)
+async def test_save_creates_new_comment(tasks_uow: TaskSQLAlchemyUnitOfWork):
+    repo = tasks_uow.repos.comment
+    async_session = tasks_uow.session
+
     comment = models.Comment(
         id=ids.CommentId(1),
         task_id=ids.TaskId(10),
@@ -482,8 +523,11 @@ async def test_save_creates_new_comment(async_session):
 
 
 @pytest.mark.anyio
-async def test_get_by_task_id_returns_comments(async_session):
-    repo = repository.SQLAlchemyTaskCommentRepository(async_session)
+async def test_get_by_task_id_returns_comments(
+        tasks_uow: TaskSQLAlchemyUnitOfWork
+):
+    repo = tasks_uow.repos.comment
+    async_session = tasks_uow.session
 
     comment_1 = models.Comment(
         id=ids.CommentId(1),
@@ -521,8 +565,9 @@ async def test_get_by_task_id_returns_comments(async_session):
 
 
 @pytest.mark.anyio
-async def test_save_creates_new_task(async_session):
-    repo = repository.SQLAlchemyTaskRepository(async_session)
+async def test_save_creates_new_task(tasks_uow: TaskSQLAlchemyUnitOfWork):
+    repo = tasks_uow.repos.task
+    async_session = tasks_uow.session
 
     task = models.Task(
         id=ids.TaskId(1),
@@ -552,8 +597,9 @@ async def test_save_creates_new_task(async_session):
 
 
 @pytest.mark.anyio
-async def test_save_updates_existing_task(async_session):
-    repo = repository.SQLAlchemyTaskRepository(async_session)
+async def test_save_updates_existing_task(tasks_uow: TaskSQLAlchemyUnitOfWork):
+    repo = tasks_uow.repos.task
+    async_session = tasks_uow.session
 
     existing = orm_models.TaskOrm(
         id=1,
@@ -592,8 +638,9 @@ async def test_save_updates_existing_task(async_session):
 
 
 @pytest.mark.anyio
-async def test_get_task_by_id(async_session):
-    repo = repository.SQLAlchemyTaskRepository(async_session)
+async def test_get_task_by_id(tasks_uow: TaskSQLAlchemyUnitOfWork):
+    repo = tasks_uow.repos.task
+    async_session = tasks_uow.session
 
     async_session.add(
         orm_models.TaskOrm(
@@ -617,15 +664,18 @@ async def test_get_task_by_id(async_session):
 
 
 @pytest.mark.anyio
-async def test_get_task_by_id_returns_none(async_session):
-    repo = repository.SQLAlchemyTaskRepository(async_session)
+async def test_get_task_by_id_returns_none(
+        tasks_uow: TaskSQLAlchemyUnitOfWork
+):
+    repo = tasks_uow.repos.task
     task = await repo.get_by_id(999)
     assert task is None
 
 
 @pytest.mark.anyio
-async def test_get_tasks_by_supervisor(async_session):
-    repo = repository.SQLAlchemyTaskRepository(async_session)
+async def test_get_tasks_by_supervisor(tasks_uow: TaskSQLAlchemyUnitOfWork):
+    repo = tasks_uow.repos.task
+    async_session = tasks_uow.session
 
     async_session.add_all([
         orm_models.TaskOrm(
@@ -665,8 +715,9 @@ async def test_get_tasks_by_supervisor(async_session):
 
 
 @pytest.mark.anyio
-async def test_get_tasks_by_executor(async_session):
-    repo = repository.SQLAlchemyTaskRepository(async_session)
+async def test_get_tasks_by_executor(tasks_uow: TaskSQLAlchemyUnitOfWork):
+    repo = tasks_uow.repos.task
+    async_session = tasks_uow.session
 
     async_session.add_all([
         orm_models.TaskOrm(
@@ -706,8 +757,9 @@ async def test_get_tasks_by_executor(async_session):
 
 
 @pytest.mark.anyio
-async def test_get_tasks_by_team(async_session):
-    repo = repository.SQLAlchemyTaskRepository(async_session)
+async def test_get_tasks_by_team(tasks_uow: TaskSQLAlchemyUnitOfWork):
+    repo = tasks_uow.repos.task
+    async_session = tasks_uow.session
 
     async_session.add_all([
         orm_models.TaskOrm(

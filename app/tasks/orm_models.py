@@ -1,5 +1,6 @@
 from app.core.database import Base, IdMixin, TimestampMixin
 from app.core.custom_types import task_status
+from app.deps.base import get_settings
 from datetime import datetime
 
 from sqlalchemy.orm import (
@@ -17,11 +18,13 @@ from sqlalchemy import (
 )
 
 
+settings = get_settings()
+
 SCHEMA = "tasks"
-TASK_FK = f"{SCHEMA}.task.id" if Base.USE_SCHEMA else "tasks.id"
-TEAM_FK = f"{SCHEMA}.task_teams.id" if Base.USE_SCHEMA else "task_teams.id"
-USER_FK = f"{SCHEMA}.tasks_user.id" if Base.USE_SCHEMA else "tasks_user.id"
-TABLE_ARGS = {"schema": SCHEMA} if Base.USE_SCHEMA else {}
+TASK_FK = f"{SCHEMA}.tasks.id" if settings.use_schema else "tasks.id"
+TEAM_FK = f"{SCHEMA}.tasks_teams.id" if settings.use_schema else "tasks_teams.id"
+USER_FK = f"{SCHEMA}.tasks_user.id" if settings.use_schema else "tasks_user.id"
+TABLE_ARGS = {"schema": SCHEMA} if settings.use_schema else {}
 
 
 class TaskUserOrm(Base, TimestampMixin):
@@ -36,7 +39,7 @@ class TaskUserOrm(Base, TimestampMixin):
 
 
 class TaskMemberOrm(Base, IdMixin):
-    __tablename__ = "task_member"
+    __tablename__ = "tasks_member"
     __table_args__ = TABLE_ARGS
 
     user_id: Mapped[int] = mapped_column(
@@ -50,7 +53,7 @@ class TaskMemberOrm(Base, IdMixin):
 
 
 class TaskTeamOrm(Base, TimestampMixin):
-    __tablename__ = 'task_teams'
+    __tablename__ = 'tasks_teams'
     __table_args__ = TABLE_ARGS
 
     id: Mapped[int] = mapped_column(
@@ -67,7 +70,7 @@ class TaskTeamOrm(Base, TimestampMixin):
 
 
 class CommentOrm(Base, IdMixin, TimestampMixin):
-    __tablename__ = 'task_comment'
+    __tablename__ = 'tasks_comment'
     __table_args__ = TABLE_ARGS
 
     author_id: Mapped[int] = mapped_column(
@@ -112,7 +115,7 @@ class TaskOrm(Base, IdMixin, TimestampMixin):
     description: Mapped[str] = mapped_column(String, nullable=False)
 
     status: Mapped[task_status.TaskStatus] = mapped_column(
-        Enum(task_status.TaskStatus, name="task_status"),
+        Enum(task_status.TaskStatus, name="tasks_status"),
         nullable=False,
         default=task_status.TaskStatus.OPEN,
     )

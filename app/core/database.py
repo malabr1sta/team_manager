@@ -10,9 +10,7 @@ from datetime import datetime
 
 
 class Base(AsyncAttrs, DeclarativeBase):
-    # Indicates whether to use a schema in the database.
-    # This is needed for tests because SQLite does not support schemas.
-    USE_SCHEMA: bool = True
+    ...
 
 
 class TimestampMixin:
