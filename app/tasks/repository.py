@@ -1,6 +1,7 @@
 from sqlalchemy import select
 
 from app.core.repositories.base import AbstractRepository
+from app.core.custom_types import ids
 from app.tasks import (
     models,
     orm_models,
@@ -126,8 +127,10 @@ class SQLAlchemyTaskCommentRepository(AbstractRepository[models.Comment]):
 
         orm_comment = result.scalar_one_or_none()
         if orm_comment is None:
-            self.session.add(mappers.TaskCommentMapper.to_orm(domain))
+            orm_comment = mappers.TaskCommentMapper.to_orm(domain)
+            self.session.add(orm_comment)
             await self.session.flush()
+            domain._id = ids.CommentId(orm_comment.id)
             return
         mappers.TaskCommentMapper.update_orm(orm_comment, domain)
 
@@ -178,7 +181,9 @@ class SQLAlchemyTaskRepository(AbstractRepository[models.Task]):
         )
         task_orm = result.scalar_one_or_none()
         if task_orm is None:
-            self.session.add(mappers.TaskMapper.to_orm(domain))
+            orm_task = mappers.TaskMapper.to_orm(domain)
+            self.session.add(orm_task)
             await self.session.flush()
+            domain._id = ids.TaskId(orm_task.id)
             return
         mappers.TaskMapper.update_orm(task_orm, domain)

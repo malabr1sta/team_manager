@@ -4,6 +4,8 @@ from app.core.entity import Entity
 from app.core.aggregate import AggregateRoot
 from app.teams import custom_exception
 
+from app.core.shared.events import teams as team_event
+
 
 @dataclass(frozen=True)
 class User:
@@ -32,6 +34,15 @@ class Team(Entity, AggregateRoot):
         self._id = id
         self._members = members if members is not None else []
         self._name = name
+        self.__user_create_id: ids.UserId | None = None
+
+    @property
+    def user_create_id(self) -> ids.UserId | None:
+        return self.__user_create_id
+
+    @user_create_id.setter
+    def user_create_id(self, value: ids.UserId):
+        self.__user_create_id = value
 
     @property
     def id(self) -> ids.TeamId | None:
@@ -75,6 +86,13 @@ class Team(Entity, AggregateRoot):
         new_member = Member(user_id, self._id, role)
         if new_member not in self._members:
             self._members.append(new_member)
+            event = team_event.MemberAddTeam(
+                team_id=self.id,
+                user_id=new_member.user_id,
+                role=new_member.role
+            )
+            self.record_event(event)
+
             return new_member
 
     def remove_member(
@@ -83,6 +101,14 @@ class Team(Entity, AggregateRoot):
         """Remove member in team"""
         member = self.get_member(user_id, role)
         self._members.remove(member)
+        if member.team_id is not None:
+            event = team_event.MemberRemoveTeam(
+                team_id=member.team_id,
+                user_id=member.user_id,
+                role=member.role
+            )
+            self.record_event(event)
+
         return member
 
     def has_member(self, user_id: ids.UserId, role: role.UserRole) -> bool:
@@ -111,3 +137,10 @@ class Team(Entity, AggregateRoot):
 
         index = self._members.index(old_member)
         self._members[index] = new_member
+        if new_member.team_id is not None:
+            event = team_event.MemberChangeRole(
+                team_id=new_member.team_id,
+                user_id=new_member.user_id,
+                role=new_member.role
+            )
+            self.record_event(event)

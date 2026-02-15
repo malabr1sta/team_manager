@@ -1,6 +1,7 @@
 from sqlalchemy import select
 
 from app.core.repositories.base import AbstractRepository
+from app.core.custom_types import ids
 from app.teams import (
     models,
     orm_models,
@@ -55,9 +56,9 @@ class SQLAlchemyMemberRepository(AbstractRepository[models.Member]):
         if orm_model is None:
             orm_member = mappers.MemberMapper.to_orm(domain)
             self.session.add(orm_member)
-            await self.session.flush()
         else:
             mappers.MemberMapper.update_orm(orm_model, domain)
+
 
 
 class SQLAlchemyTeamRepository(AbstractRepository[models.Team]):
@@ -76,7 +77,7 @@ class SQLAlchemyTeamRepository(AbstractRepository[models.Team]):
             orm_team = mappers.TeamMapper.to_orm(domain)
             self.session.add(orm_team)
             await self.session.flush()
-            self.uow._seen.add(domain)
+            domain._id = ids.TeamId(orm_team.id)
         else:
             result = await self.session.execute(
                 select(orm_models.TeamOrm)
@@ -84,3 +85,4 @@ class SQLAlchemyTeamRepository(AbstractRepository[models.Team]):
             )
             orm_model = result.scalar_one()
             mappers.TeamMapper.update_orm(orm_model, domain)
+        self.uow._seen.add(domain)

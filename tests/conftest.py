@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import (
 )
 from app.core.database import Base
 from app.core.infrastructure.event_bus import MemoryEventBus
-from app.core.register_handlers import register_event_handlers
 
 
 @pytest.fixture(scope="function")

@@ -1,5 +1,5 @@
 from app.core.shared.events import teams as team_event
-from app.core.custom_types import ids
+from app.core.custom_types import ids, role
 from app.core.infrastructure.event import EventHandler
 from app.tasks.models import Team
 from app.tasks.unit_of_work import (
@@ -22,3 +22,4 @@ class TeamCreatedHandler(EventHandler[team_event.TeamCreated]):
         async with self.uow as uow:
             team = Team(ids.TeamId(event.team_id), [])
             await uow.repos.team.save(team)
+            await uow.commit()
