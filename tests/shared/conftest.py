@@ -14,6 +14,11 @@ from app.tasks.unit_of_work import (
     TaskSQLAlchemyUnitOfWork,
     TaskRepositoryProvider
 )
+from app.core.custom_types import ids
+from app.teams import (
+    management as teams_management,
+    models as teams_models
+)
 
 
 @pytest.fixture(scope="function")
@@ -66,3 +71,29 @@ async def tasks_uow(tasks_uow_factory):
     """Tasks UnitOfWork with automatic context."""
     async with tasks_uow_factory as uow:
         yield uow
+
+
+@pytest.fixture
+async def created_team(
+    teams_uow: TeamSQLAlchemyUnitOfWork,
+    registered_event_bus
+) -> teams_models.Team:
+    """
+    Fixture that creates a team and commits it to the database.
+
+    Returns:
+        Team: Created and persisted team instance
+    """
+    user_id = ids.UserId(1)
+    team_name = "Engineering Team"
+
+    team = teams_management.create_team(
+        user_id=user_id,
+        team_id=None,
+        name=team_name
+    )
+
+    await teams_uow.repos.team.save(team)
+    teams_management.make_team_created_event(team)
+    await teams_uow.commit()
+    return team

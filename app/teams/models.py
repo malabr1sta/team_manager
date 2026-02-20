@@ -77,31 +77,32 @@ class Team(Entity, AggregateRoot):
         )
 
     def add_member(
-            self, user_id: ids.UserId, role: role.UserRole
+            self, user_id: ids.UserId, role_member: role.UserRole
     ) -> Member | None:
         """Add member in team"""
         if self.id is None:
             raise custom_exception.TeamIdMissingException(
                 "Cannot add member to a team without id")
-        new_member = Member(user_id, self._id, role)
+        new_member = Member(user_id, self._id, role_member)
         if new_member not in self._members:
             self._members.append(new_member)
-            event = team_event.MemberAddTeam(
-                team_id=self.id,
-                user_id=new_member.user_id,
-                role=new_member.role
-            )
-            self.record_event(event)
+            if role_member != role.UserRole.ADMIN:
+                event = team_event.MemberAddTeam(
+                    team_id=self.id,
+                    user_id=new_member.user_id,
+                    role=new_member.role
+                )
+                self.record_event(event)
 
             return new_member
 
     def remove_member(
-            self, user_id: ids.UserId, role: role.UserRole
+            self, user_id: ids.UserId, role_member: role.UserRole
     ) -> Member:
         """Remove member in team"""
-        member = self.get_member(user_id, role)
+        member = self.get_member(user_id, role_member)
         self._members.remove(member)
-        if member.team_id is not None:
+        if member.team_id is not None and role_member != role.UserRole.ADMIN:
             event = team_event.MemberRemoveTeam(
                 team_id=member.team_id,
                 user_id=member.user_id,
@@ -120,27 +121,72 @@ class Team(Entity, AggregateRoot):
         user_id: ids.UserId,
         old_role: role.UserRole,
         new_role: role.UserRole,
-    ):
-        "Change roles in team"
+    ) -> None:
+        """Change member role in team."""
+        if old_role == new_role:
+            return
 
         old_member = Member(user_id, self.id, old_role)
         new_member = Member(user_id, self.id, new_role)
 
+        self._validate_role_change(old_member)
+        self._apply_role_change(old_member, new_member)
+        self._record_role_change_event(old_member, new_member)
+
+
+    def _validate_role_change(self, old_member: Member) -> None:
         if old_member not in self._members:
             raise custom_exception.MemberNotFoundException(
                 "User with this role not found"
             )
 
+    def _apply_role_change(
+            self, old_member: Member, new_member: Member
+    ) -> None:
+        """Replace old member entry with new one,
+        or just remove if duplicate exists."""
         if new_member in self._members:
             self._members.remove(old_member)
             return
 
         index = self._members.index(old_member)
         self._members[index] = new_member
-        if new_member.team_id is not None:
-            event = team_event.MemberChangeRole(
-                team_id=new_member.team_id,
-                user_id=new_member.user_id,
-                role=new_member.role
+
+    def _record_role_change_event(
+            self, old_member: Member, new_member: Member
+    ) -> None:
+        if new_member.team_id is None:
+            return
+
+        event = self._build_role_change_event(old_member, new_member)
+        self.record_event(event)
+
+    def _build_role_change_event(
+        self,
+        old_member: Member,
+        new_member: Member,
+    ) -> team_event.MemberEvent:
+
+        if self.id is None:
+            raise ValueError("Cannot record event for a team without an id")
+
+        if new_member.role == role.UserRole.ADMIN:
+            return team_event.MemberRemoveTeam(
+                team_id=self.id,
+                user_id=old_member.user_id,
+                role=old_member.role,
             )
-            self.record_event(event)
+
+        if old_member.role == role.UserRole.ADMIN:
+            return team_event.MemberAddTeam(
+                team_id=self.id,
+                user_id=new_member.user_id,
+                role=new_member.role,
+            )
+
+        return team_event.MemberChangeRole(
+            team_id=self.id,
+            user_id=new_member.user_id,
+            new_role=new_member.role,
+            old_role=old_member.role,
+        )

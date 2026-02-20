@@ -31,9 +31,41 @@ async def register_event_handlers(
                 tasks_uow.TaskSQLAlchemyUnitOfWork(
                     session_factory, bus, tasks_uow.TaskRepositoryProvider
                 ),
-
             ),
+
         ],
+
+        team_event.MemberAddTeam: [
+
+            tasks_handlers.MemberAddTeamHandler(
+                tasks_uow.TaskSQLAlchemyUnitOfWork(
+                    session_factory, bus, tasks_uow.TaskRepositoryProvider
+                ),
+            ),
+
+        ],
+
+        team_event.MemberRemoveTeam: [
+
+            tasks_handlers.MemberRemoveTeamHandler(
+                tasks_uow.TaskSQLAlchemyUnitOfWork(
+                    session_factory, bus, tasks_uow.TaskRepositoryProvider
+                ),
+            ),
+
+        ],
+
+        team_event.MemberChangeRole: [
+
+            tasks_handlers.MemberChangeRoleHandler(
+                tasks_uow.TaskSQLAlchemyUnitOfWork(
+                    session_factory, bus, tasks_uow.TaskRepositoryProvider
+                ),
+            ),
+
+        ],
+
+
     }
 
     for event_type, handlers in handlers_map.items():

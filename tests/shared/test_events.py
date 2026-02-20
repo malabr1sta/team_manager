@@ -1,13 +1,15 @@
 import pytest
 
-from app.core.custom_types import ids
+from app.core.custom_types import ids, role
 from app.teams import (
-    management as teams_management
+    management as teams_management,
+    models as teams_models
 )
 from app.teams.unit_of_work import TeamSQLAlchemyUnitOfWork
 from app.tasks.unit_of_work import (
     TaskSQLAlchemyUnitOfWork,
 )
+from app.tasks import models as tasks_models
 
 
 @pytest.mark.anyio
@@ -53,4 +55,78 @@ async def test_task_team_created_after_team_creation(
 
     assert task_team is not None, "TaskTeam should be created"
     assert task_team.id == team.id, "TaskTeam ID should match Team ID"
-    # assert task_team.members == [], "TaskTeam should have empty members list"
+
+
+@pytest.mark.anyio
+async def test_task_team_add_member(
+    created_team: teams_models.Team,
+    teams_uow: TeamSQLAlchemyUnitOfWork,
+    tasks_uow: TaskSQLAlchemyUnitOfWork
+):
+    team = created_team
+    user_id_admin = ids.UserId(10)
+    user_id_member = ids.UserId(11)
+    user_id_manager = ids.UserId(12)
+    assert team.id is not None
+    team.add_member(user_id=user_id_member, role_member=role.UserRole.MEMBER)
+    team.add_member(user_id=user_id_manager, role_member=role.UserRole.MANAGER)
+    team.add_member(user_id=user_id_admin, role_member=role.UserRole.ADMIN)
+    await teams_uow.repos.team.save(team)
+    await teams_uow.commit()
+
+    team_task = await tasks_uow.repos.team.get_by_id(team.id)
+    assert team_task is not None
+    member = tasks_models.MemberTask(
+        user_id_member, team_task.id, role.UserTaskRole.MEMBER
+    )
+    assert member == team_task.get_member(
+        user_id_member, role.UserTaskRole.MEMBER
+    )
+    manager = tasks_models.MemberTask(
+        user_id_manager, team_task.id, role.UserTaskRole.MANAGER
+    )
+    assert manager == team_task.get_member(
+        user_id_manager, role.UserTaskRole.MANAGER
+    )
+    assert len(team_task._members) == 2
+
+
+@pytest.mark.anyio
+async def test_task_team_remove_member(
+    created_team: teams_models.Team,
+    teams_uow: TeamSQLAlchemyUnitOfWork,
+    tasks_uow: TaskSQLAlchemyUnitOfWork
+):
+    team = created_team
+    user_id_admin = ids.UserId(10)
+    user_id_member = ids.UserId(11)
+    user_id_manager = ids.UserId(12)
+    assert team.id is not None
+    team.add_member(user_id=user_id_member, role_member=role.UserRole.MEMBER)
+    team.add_member(user_id=user_id_manager, role_member=role.UserRole.MANAGER)
+    team.add_member(user_id=user_id_admin, role_member=role.UserRole.ADMIN)
+    await teams_uow.repos.team.save(team)
+    await teams_uow.commit()
+
+    team.remove_member(user_id_admin, role.UserRole.ADMIN)
+    await teams_uow.repos.team.save(team)
+    await teams_uow.commit()
+    team_task = await tasks_uow.repos.team.get_by_id(team.id)
+    assert team_task is not None
+    assert len(team_task._members) == 2
+
+    team.remove_member(user_id_member, role.UserRole.MEMBER)
+    await teams_uow.repos.team.save(team)
+    await teams_uow.commit()
+
+    team_task = await tasks_uow.repos.team.get_by_id(team.id)
+    assert team_task is not None
+    assert not team_task.has_member(user_id_member, role.UserTaskRole.MEMBER)
+
+    team.remove_member(user_id_manager, role.UserRole.MANAGER)
+    await teams_uow.repos.team.save(team)
+    await teams_uow.commit()
+
+    team_task = await tasks_uow.repos.team.get_by_id(team.id)
+    assert team_task is not None
+    assert not team_task.has_member(user_id_manager, role.UserTaskRole.MANAGER)

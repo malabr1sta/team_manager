@@ -10,8 +10,12 @@ class TeamCreated(DomainEvent):
     user_id: int
 
 
+class MemberEvent(DomainEvent):
+    pass
+
+
 @dataclass(frozen=True)
-class MemberAddTeam(DomainEvent):
+class MemberAddTeam(MemberEvent):
     """Event: Member add in Team context."""
     team_id: int
     user_id: int
@@ -19,7 +23,7 @@ class MemberAddTeam(DomainEvent):
 
 
 @dataclass(frozen=True)
-class MemberRemoveTeam(DomainEvent):
+class MemberRemoveTeam(MemberEvent):
     """Event: Member remove in Team context."""
     team_id: int
     user_id: int
@@ -27,8 +31,9 @@ class MemberRemoveTeam(DomainEvent):
 
 
 @dataclass(frozen=True)
-class MemberChangeRole(DomainEvent):
+class MemberChangeRole(MemberEvent):
     """Event: Member change role in Team context."""
     team_id: int
     user_id: int
-    role: str
+    new_role: str
+    old_role: str

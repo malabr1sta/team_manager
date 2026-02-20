@@ -37,6 +37,36 @@ class Team(Entity):
         """Return team identifier."""
         return self._id
 
+    def get_member(
+            self, user_id: ids.UserId, role: role.UserTaskRole
+    ) -> MemberTask:
+        """Return team member by user id or raise an error if not found."""
+        for member in self.members:
+            if member.user_id == user_id and member.role == role:
+                return member
+        raise custom_exception.TaskMemberNotFoundException(
+            "User is not a team member")
+
+    def add_member(
+            self, user_id: ids.UserId, role: role.UserTaskRole
+    ) -> MemberTask | None:
+        """Add member in team"""
+        if self.id is None:
+            raise custom_exception.TaskTeamIdMissingException(
+                "Cannot add member to a team without id")
+        new_member = MemberTask(user_id, self._id, role)
+        if new_member not in self._members:
+            self._members.append(new_member)
+            return new_member
+
+    def remove_member(
+            self, user_id: ids.UserId, role: role.UserTaskRole
+    ) -> MemberTask:
+        """Remove member in team"""
+        member = self.get_member(user_id, role)
+        self._members.remove(member)
+        return member
+
     @property
     def members(self) -> tuple[MemberTask, ...]:
         """Return team members as an immutable collection."""
@@ -52,6 +82,29 @@ class Team(Entity):
     def has_member(self, user_id: ids.UserId, role: role.UserTaskRole) -> bool:
             """Check whether the user is already a team member."""
             return MemberTask(user_id, self.id, role) in self.members
+
+    def change_role(
+        self,
+        user_id: ids.UserId,
+        old_role: role.UserTaskRole,
+        new_role: role.UserTaskRole,
+    ):
+        "Change roles in team"
+
+        old_member = MemberTask(user_id, self.id, old_role)
+        new_member = MemberTask(user_id, self.id, new_role)
+
+        if old_member not in self._members:
+            raise custom_exception.TaskMemberNotFoundException(
+                "User with this role not found"
+            )
+
+        if new_member in self._members:
+            self._members.remove(old_member)
+            return
+
+        index = self._members.index(old_member)
+        self._members[index] = new_member
 
 
 class Comment(Entity):
