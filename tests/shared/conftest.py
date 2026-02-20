@@ -1,7 +1,9 @@
 import pytest
 from typing import AsyncGenerator
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
         AsyncSession,
+        create_async_engine,
         async_sessionmaker,
 )
 from app.core.infrastructure.event_bus import MemoryEventBus
@@ -10,6 +12,7 @@ from app.teams.unit_of_work import (
     TeamSQLAlchemyUnitOfWork,
     TeamRepositoryProvider
 )
+from app.tasks import models as tasks_models
 from app.tasks.unit_of_work import (
     TaskSQLAlchemyUnitOfWork,
     TaskRepositoryProvider
@@ -19,6 +22,27 @@ from app.teams import (
     management as teams_management,
     models as teams_models
 )
+from app.core.database import Base
+from app.core.infrastructure.event_bus import MemoryEventBus
+
+
+@pytest.fixture(scope="function")
+async def engine():
+    """Create the engine and session once for all tests."""
+    engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        echo=True,
+    )
+    async with engine.begin() as conn:
+        await conn.run_sync(
+            lambda sync_conn: sync_conn.execute(
+                text("PRAGMA foreign_keys = ON")
+            )
+        )
+        await conn.run_sync(Base.metadata.create_all)
+    yield engine
+    await engine.dispose()
+
 
 
 @pytest.fixture(scope="function")
@@ -86,6 +110,10 @@ async def created_team(
     """
     user_id = ids.UserId(1)
     team_name = "Engineering Team"
+    user = teams_models.User(user_id)
+
+    await teams_uow.repos.user.save(user)
+    await teams_uow.commit()
 
     team = teams_management.create_team(
         user_id=user_id,
@@ -97,3 +125,29 @@ async def created_team(
     teams_management.make_team_created_event(team)
     await teams_uow.commit()
     return team
+
+
+@pytest.fixture
+async def init_user(
+    teams_uow: TeamSQLAlchemyUnitOfWork,
+    tasks_uow: TaskSQLAlchemyUnitOfWork
+):
+    user_id_admin = ids.UserId(10)
+    user_id_member = ids.UserId(11)
+    user_id_manager = ids.UserId(12)
+
+    team_user_admin = teams_models.User(user_id_admin)
+    team_user_member = teams_models.User(user_id_member)
+    team_user_manager = teams_models.User(user_id_manager)
+
+    task_user_member = tasks_models.TaskUser(user_id_member, "name")
+    task_user_manager = tasks_models.TaskUser(user_id_manager, "name1")
+
+    await teams_uow.repos.user.save(team_user_admin)
+    await teams_uow.repos.user.save(team_user_member)
+    await teams_uow.repos.user.save(team_user_manager)
+    await teams_uow.commit()
+
+    await tasks_uow.repos.user.save(task_user_member)
+    await tasks_uow.repos.user.save(task_user_manager)
+    await tasks_uow.commit()

@@ -33,6 +33,10 @@ async def test_task_team_created_after_team_creation(
     user_id = ids.UserId(1)
     team_name = "Engineering Team"
 
+    user = teams_models.User(user_id)
+
+    await teams_uow.repos.user.save(user)
+    await teams_uow.commit()
     team = teams_management.create_team(
         user_id=user_id,
         team_id=None,
@@ -61,7 +65,8 @@ async def test_task_team_created_after_team_creation(
 async def test_task_team_add_member(
     created_team: teams_models.Team,
     teams_uow: TeamSQLAlchemyUnitOfWork,
-    tasks_uow: TaskSQLAlchemyUnitOfWork
+    tasks_uow: TaskSQLAlchemyUnitOfWork,
+    init_user
 ):
     team = created_team
     user_id_admin = ids.UserId(10)
@@ -95,7 +100,8 @@ async def test_task_team_add_member(
 async def test_task_team_remove_member(
     created_team: teams_models.Team,
     teams_uow: TeamSQLAlchemyUnitOfWork,
-    tasks_uow: TaskSQLAlchemyUnitOfWork
+    tasks_uow: TaskSQLAlchemyUnitOfWork,
+    init_user
 ):
     team = created_team
     user_id_admin = ids.UserId(10)

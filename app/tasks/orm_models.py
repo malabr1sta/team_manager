@@ -43,7 +43,7 @@ class TaskMemberOrm(Base, IdMixin):
     __table_args__ = TABLE_ARGS
 
     user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey(USER_FK)
+        Integer, ForeignKey(USER_FK), nullable=False
     )
     team_id: Mapped[int] = mapped_column(
         Integer, ForeignKey(TEAM_FK)

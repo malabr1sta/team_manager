@@ -52,6 +52,9 @@ async def test_uow_commit_persists_data(
         bus=event_bus,
         provider_cls=TeamRepositoryProvider
     ) as uow:
+        user = models.User(ids.UserId(1))
+        await uow.repos.user.save(user)
+        await uow.commit()
         team_domain = models.Team(
             id=None,
             name="Test Team",
