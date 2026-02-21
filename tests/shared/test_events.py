@@ -136,3 +136,58 @@ async def test_task_team_remove_member(
     team_task = await tasks_uow.repos.team.get_by_id(team.id)
     assert team_task is not None
     assert not team_task.has_member(user_id_manager, role.UserTaskRole.MANAGER)
+
+
+@pytest.mark.anyio
+async def test_task_team_change_role(
+    created_team: teams_models.Team,
+    teams_uow: TeamSQLAlchemyUnitOfWork,
+    tasks_uow: TaskSQLAlchemyUnitOfWork,
+    init_user
+):
+    team = created_team
+    user_id_admin = ids.UserId(10)
+    user_id_member = ids.UserId(11)
+    user_id_manager = ids.UserId(12)
+    assert team.id is not None
+    team.add_member(user_id=user_id_member, role_member=role.UserRole.MEMBER)
+    team.add_member(user_id=user_id_manager, role_member=role.UserRole.MANAGER)
+    team.add_member(user_id=user_id_admin, role_member=role.UserRole.ADMIN)
+    await teams_uow.repos.team.save(team)
+    await teams_uow.commit()
+
+    team.change_role(
+        user_id_member,
+        role.UserRole.MEMBER,
+        role.UserRole.MANAGER
+    )
+    await teams_uow.repos.team.save(team)
+    await teams_uow.commit()
+
+    team_task = await tasks_uow.repos.team.get_by_id(team.id)
+    assert team_task is not None
+    assert team_task.has_member(user_id_member, role.UserTaskRole.MANAGER)
+    assert not team_task.has_member(user_id_member, role.UserTaskRole.MEMBER)
+
+    team.change_role(
+        user_id_member,
+        role.UserRole.MANAGER,
+        role.UserRole.ADMIN
+    )
+    await teams_uow.repos.team.save(team)
+    await teams_uow.commit()
+
+    team_task = await tasks_uow.repos.team.get_by_id(team.id)
+    assert team_task is not None
+    assert len(team_task._members) == 1
+
+    team.change_role(
+        user_id_member,
+        role.UserRole.ADMIN,
+        role.UserRole.MEMBER
+    )
+    await teams_uow.repos.team.save(team)
+    await teams_uow.commit()
+    team_task = await tasks_uow.repos.team.get_by_id(team.id)
+    assert team_task is not None
+    assert len(team_task._members) == 2
