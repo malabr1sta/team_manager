@@ -8,3 +8,6 @@ class UserDeleteException(Exception):
     """
     pass
 
+
+class UserNotFoundException(Exception):
+    pass

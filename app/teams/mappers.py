@@ -1,6 +1,20 @@
-from app.teams.orm_models import MemberOrm, TeamOrm
+from app.teams.orm_models import MemberOrm, TeamUserOrm, TeamOrm
 from app.core.custom_types import ids, role
-from app.teams.models import Member, Team
+from app.teams.models import Member, Team, User
+
+
+class UserMapper:
+
+    @staticmethod
+    def to_domain(orm: TeamUserOrm) -> User:
+        """ORM -> Domain"""
+        return User(ids.UserId(orm.id))
+
+    @staticmethod
+    def to_orm(user: User) -> TeamUserOrm:
+        return TeamUserOrm(
+            id=user.id
+        )
 
 
 class MemberMapper:

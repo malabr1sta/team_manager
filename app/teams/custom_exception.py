@@ -10,3 +10,6 @@ class MemberNotAdminException(Exception):
 class TeamIdMissingException(Exception):
     """Raised when a team does not have an ID but an operation requires it."""
     pass
+
+class UserNotFoundException(Exception):
+    pass

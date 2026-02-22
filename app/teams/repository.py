@@ -11,6 +11,16 @@ from app.teams import (
 class SQLAlchemyUserRepository(AbstractRepository[models.User]):
     """Implementing a user's repository"""
 
+    async def get_by_id(self, id: int) -> models.User | None:
+        result = await self.session.execute(
+            select(orm_models.TeamUserOrm)
+            .where(orm_models.TeamUserOrm.id == id)
+        )
+        orm = result.scalar_one_or_none()
+        if orm is None:
+            return None
+        return mappers.UserMapper.to_domain(orm)
+
     async def save(self, domain: models.User):
         self.session.add(
             orm_models.TeamUserOrm(id=domain.id)
