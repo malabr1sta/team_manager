@@ -1,4 +1,4 @@
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Annotated
 
 from fastapi import Depends
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
@@ -29,11 +29,15 @@ from app.deps.base import (
 settings = get_settings()
 
 
+SessionFactory = Annotated[
+    async_sessionmaker[AsyncSession], Depends(get_session_factory)
+]
+Bus = Annotated[EventBus, Depends(get_bus)]
+
+
 async def user_uow_factory(
-        async_session_factory: async_sessionmaker[AsyncSession] = Depends(
-            get_session_factory
-        ),
-        event_bus: EventBus = Depends(get_bus),
+        async_session_factory: SessionFactory,
+        event_bus: Bus,
 ) -> IdentitySQLAlchemyUnitOfWork:
     """Factory for Identity UnitOfWork."""
     return IdentitySQLAlchemyUnitOfWork(
@@ -44,24 +48,32 @@ async def user_uow_factory(
 
 
 async def user_uow(
-        user_uow_factory: IdentitySQLAlchemyUnitOfWork = Depends(
-            user_uow_factory
-        )
+        uow_factory: Annotated[
+            IdentitySQLAlchemyUnitOfWork, Depends(user_uow_factory)
+        ],
 ) -> AsyncGenerator[SQLAlchemyUnitOfWork[IdentityRepositoryProvider], None]:
     """Identity UnitOfWork with automatic context."""
-    async with user_uow_factory as uow:
+    async with uow_factory as uow:
         yield uow
 
 
-# ── For fastapi users (authentication)
-async def get_user_db(session: AsyncSession = Depends(get_session)):
+IdentityUoW = Annotated[
+    SQLAlchemyUnitOfWork[IdentityRepositoryProvider], Depends(user_uow)
+]
+
+
+async def get_user_db(
+        session: Annotated[AsyncSession, Depends(get_session)],
+):
+    """Provide SQLAlchemy user database for fastapi-users."""
     yield SQLAlchemyUserDatabase(session, UserORM)
 
 
 async def get_user_manager(
-    user_db=Depends(get_user_db),
-    bus: EventBus = Depends(get_bus),
+        user_db: Annotated[SQLAlchemyUserDatabase, Depends(get_user_db)],
+        bus: Bus,
 ):
+    """Provide UserManager for fastapi-users."""
     yield UserManager(user_db, bus)
 
 
@@ -71,7 +83,9 @@ def get_jwt_strategy() -> JWTStrategy:
         lifetime_seconds=3600,
     )
 
+
 bearer_transport = BearerTransport(tokenUrl="/auth/jwt/login")
+
 auth_backend = AuthenticationBackend(
     name="jwt",
     transport=bearer_transport,

@@ -43,7 +43,7 @@ class UpdateUserUseCase:
         user = await self.uow.repos.user.get_by_id(command.user_id)
         if user is None:
             raise UserNotFoundException(f"User {command.user_id} not found")
-        user.update(email=command.email, username=command.username)
+        user.update(username=command.username)
         await self.uow.repos.user.save(user)
         await self.uow.commit()
         return dto.UpdateUserResult(

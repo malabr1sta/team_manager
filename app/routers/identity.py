@@ -1,8 +1,16 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 
-from deps.user import fastapi_users, auth_backend, current_active_user
-from app.identity import schemas
+from deps.user import (
+    fastapi_users,
+    auth_backend,
+    current_active_user,
+    user_uow,
+)
+from app.identity import schemas, dto, use_cases
 from app.identity.orm_models import UserORM
+from app.identity.unit_of_work import IdentitySQLAlchemyUnitOfWork
 
 
 auth_router = APIRouter()
@@ -39,7 +47,29 @@ users_router = APIRouter(
     tags=["users"],
 )
 
+
 @users_router.get("/me")
-async def get_me(user: UserORM = Depends(current_active_user)):
+async def get_me(user: Annotated[UserORM, Depends(current_active_user)]):
     return user
 
+
+@users_router.patch("/me")
+async def update_me(
+    command_body: dto.UpdateUserCommand,
+    user: Annotated[UserORM, Depends(current_active_user)],
+    uow: Annotated[IdentitySQLAlchemyUnitOfWork, Depends(user_uow)],
+):
+    command = dto.UpdateUserCommand(
+        user_id=user.id,
+        username=command_body.username,
+    )
+    return await use_cases.UpdateUserUseCase(uow).execute(command)
+
+
+@users_router.delete("/me", status_code=204)
+async def delete_me(
+    user: Annotated[UserORM, Depends(current_active_user)],
+    uow: Annotated[IdentitySQLAlchemyUnitOfWork, Depends(user_uow)],
+):
+    command = dto.DeleteUserCommand(user_id=user.id)
+    await use_cases.DeleteUserUseCase(uow).execute(command)
