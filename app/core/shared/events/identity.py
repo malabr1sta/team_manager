@@ -10,7 +10,7 @@ class UserEvent(DomainEvent):
 class UserRegistered(UserEvent):
     """Event: User was registered in Identity context."""
     user_id: int
-    email: str
+    username: str
 
 
 @dataclass(frozen=True)

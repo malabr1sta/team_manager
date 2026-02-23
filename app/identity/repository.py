@@ -1,18 +1,8 @@
-from fastapi import Depends
-from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.repositories.base import AbstractRepository
-from app.deps.base import get_session
 from app.identity.orm_models import UserORM
 from app.identity import models, mappers
-
-
-# ── For fastapi users (authentication)
-
-async def get_user_db(session: AsyncSession = Depends(get_session)):
-    yield SQLAlchemyUserDatabase(session, UserORM)
 
 
 # ── For domain logic (UoW)

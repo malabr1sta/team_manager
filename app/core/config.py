@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     database_host: str | None = None
     database_port: int | None = None
     test: bool | None = None
+    secret_key: str = ""
     model_config = SettingsConfigDict(env_file="././.env")
 
     @property
