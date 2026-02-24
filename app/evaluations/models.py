@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from app.core.custom_types import ids, task_status, grade
 from app.core.entity import Entity
+from app.core.shared.models.users import BaseUser
 from app.evaluations import custom_exception
 
 from dataclasses import dataclass
@@ -30,16 +31,17 @@ class Evaluation:
         return True
 
 
-class User(Entity):
+class User(BaseUser):
 
-    def __init__(self, id: ids.UserId, evaluations: list[Evaluation]):
-        self._id = id
-        self._evaluations = evaluations
-
-    @property
-    def id(self) -> ids.UserId:
-        """Return team identifier."""
-        return self._id
+    def __init__(
+            self,
+            id: ids.UserId,
+            evaluations: list[Evaluation] | None = None,
+            username: str = ""
+    ):
+        self.id = id
+        self.username = username
+        self._evaluations = evaluations if evaluations is not None else []
 
     @property
     def evaluations(self) -> tuple[Evaluation, ...]:

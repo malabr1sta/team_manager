@@ -35,7 +35,7 @@ class TaskUserOrm(Base, TimestampMixin):
         Integer,
         primary_key=True,
     )
-    username: Mapped[str] = mapped_column(String)
+    username: Mapped[str] = mapped_column(String, nullable=True)
 
 
 class TaskMemberOrm(Base, IdMixin):

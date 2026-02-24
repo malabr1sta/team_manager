@@ -99,3 +99,5 @@ fastapi_users = FastAPIUsers[UserORM, int](
 
 current_active_user = fastapi_users.current_user(active=True)
 # current_verified_user = fastapi_users.current_user(active=True, verified=True)
+
+UserDepend = Annotated[UserORM, Depends(current_active_user)]

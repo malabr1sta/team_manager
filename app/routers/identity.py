@@ -3,9 +3,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from deps.user import (
+    UserDepend,
     fastapi_users,
     auth_backend,
-    current_active_user,
     user_uow,
 )
 from app.identity import schemas, dto, use_cases
@@ -49,14 +49,14 @@ users_router = APIRouter(
 
 
 @users_router.get("/me")
-async def get_me(user: Annotated[UserORM, Depends(current_active_user)]):
+async def get_me(user: UserDepend):
     return user
 
 
 @users_router.patch("/me")
 async def update_me(
     command_body: dto.UpdateUserCommand,
-    user: Annotated[UserORM, Depends(current_active_user)],
+    user: UserDepend,
     uow: Annotated[IdentitySQLAlchemyUnitOfWork, Depends(user_uow)],
 ):
     command = dto.UpdateUserCommand(
@@ -68,7 +68,7 @@ async def update_me(
 
 @users_router.delete("/me", status_code=204)
 async def delete_me(
-    user: Annotated[UserORM, Depends(current_active_user)],
+    user: UserDepend,
     uow: Annotated[IdentitySQLAlchemyUnitOfWork, Depends(user_uow)],
 ):
     command = dto.DeleteUserCommand(user_id=user.id)

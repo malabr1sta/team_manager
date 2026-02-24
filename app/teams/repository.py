@@ -22,9 +22,15 @@ class SQLAlchemyUserRepository(AbstractRepository[models.User]):
         return mappers.UserMapper.to_domain(orm)
 
     async def save(self, domain: models.User):
-        self.session.add(
-            orm_models.TeamUserOrm(id=domain.id)
+        result = await self.session.execute(
+            select(orm_models.TeamUserOrm)
+            .where(orm_models.TeamUserOrm.id == domain.id)
         )
+        orm = result.scalar_one_or_none()
+        if orm is None:
+            self.session.add(mappers.UserMapper.to_orm(domain))
+            return
+        mappers.UserMapper.update_orm(orm, domain)
 
 
 class SQLAlchemyMemberRepository(AbstractRepository[models.Member]):

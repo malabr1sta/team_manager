@@ -1,7 +1,7 @@
 from app.core.shared.events import teams as team_event
 from app.core.custom_types import ids, role
 from app.core.infrastructure.event import EventHandler
-from app.tasks.models import Team, MemberTask
+from app.tasks.models import Team
 from app.tasks.custom_exception import TeamNotFoundException
 from app.tasks.unit_of_work import (
         TaskSQLAlchemyUnitOfWork

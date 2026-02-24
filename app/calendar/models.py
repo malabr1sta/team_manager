@@ -1,7 +1,12 @@
 from app.core.entity import Entity
+from app.core.shared.models.users import BaseUser
 from app.core.custom_types import ids, calendar_type
 
 from datetime import datetime
+
+
+class CalendarUser(BaseUser):
+    ...
 
 
 class CalendarEvent(Entity):

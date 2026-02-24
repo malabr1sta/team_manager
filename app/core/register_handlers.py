@@ -1,9 +1,16 @@
 from app.core.shared.events import teams as team_event
+from app.core.shared.events import identity as user_event
 from app.core.infrastructure.event import EventBus
 from app.tasks import (
     handlers as tasks_handlers,
     unit_of_work as tasks_uow
 )
+from app.teams import (
+    handlers as teams_handlers,
+    unit_of_work as teams_uow,
+    models as teams_models
+)
+
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -25,6 +32,18 @@ async def register_event_handlers(
         await register_event_handlers(app.state.bus, app.state.async_session)
     """
     handlers_map = {
+
+        user_event.UserRegistered: [
+
+            teams_handlers.TeamUserCreatedHandler(
+                teams_uow.TeamSQLAlchemyUnitOfWork(
+                    session_factory, bus, teams_uow.TeamRepositoryProvider
+                ),
+                teams_models.User
+            ),
+
+        ],
+
         team_event.TeamCreated: [
 
             tasks_handlers.TeamCreatedHandler(

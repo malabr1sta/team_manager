@@ -8,13 +8,19 @@ class UserMapper:
     @staticmethod
     def to_domain(orm: TeamUserOrm) -> User:
         """ORM -> Domain"""
-        return User(ids.UserId(orm.id))
+        return User(ids.UserId(orm.id), orm.username)
 
     @staticmethod
     def to_orm(user: User) -> TeamUserOrm:
         return TeamUserOrm(
-            id=user.id
+            id=user.id,
+            username=user.username
         )
+
+    @staticmethod
+    def update_orm(orm: TeamUserOrm, user: User) -> None:
+        orm.id=user.id
+        orm.username = user.username
 
 
 class MemberMapper:

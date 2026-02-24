@@ -2,16 +2,15 @@ from typing import Unpack
 from datetime import datetime, timezone
 from app.core.custom_types import ids, role, task_status, task_patch
 from app.core.entity import Entity
+from app.core.shared.models.users import BaseUser
 from app.tasks import custom_exception
 
 from dataclasses import dataclass
 
 
-class TaskUser(Entity):
+class TaskUser(BaseUser):
+    ...
 
-    def __init__(self, id: ids.UserId, username: str):
-        self.id = id
-        self.username = username
 
 @dataclass(frozen=True)
 class MemberTask:

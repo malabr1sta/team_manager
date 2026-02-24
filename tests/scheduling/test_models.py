@@ -31,7 +31,7 @@ class TestMeeting:
     def test_add_participant_success(self, user, team, meeting):
         meeting.add_participant(user, team)
         assert meeting in user._meetings
-        assert any(p.user_id == user._id for p in meeting._participants)
+        assert any(p.user_id == user.id for p in meeting._participants)
 
     def test_add_participant_not_team_member(self, user):
         other_team = Team(
@@ -68,7 +68,7 @@ class TestMeeting:
         start = datetime.now(timezone.utc) + timedelta(hours=1)
         end = start + timedelta(hours=1)
         meeting = Meeting(
-            organizer_id=1,
+            organizer_id=ids.UserId(1),
             team_id=team._id,
             start=start,
             end=end,
@@ -82,7 +82,7 @@ class TestMeeting:
         start = datetime.now(timezone.utc) - timedelta(hours=2)
         end = datetime.now(timezone.utc) - timedelta(hours=1)
         meeting = Meeting(
-            organizer_id=1,
+            organizer_id=ids.UserId(1),
             team_id=team._id,
             start=start,
             end=end,
@@ -174,7 +174,7 @@ class TestMeetingManagement:
         )
 
         assert participant is not None
-        assert participant.user_id == user._id
+        assert participant.user_id == user.id
         assert meeting in user._meetings
 
     def test_action_remove_meeting_success(self, user, team, meeting):
@@ -186,13 +186,13 @@ class TestMeetingManagement:
         )
 
         removed = action.execute(
-            user_id=user._id,
+            user_id=user.id,
         )
 
         assert removed
-        assert removed.user_id == user._id
+        assert removed.user_id == user.id
         assert all(
-            participant.user_id != user._id
+            participant.user_id != user.id
             for participant in meeting._participants
         )
 

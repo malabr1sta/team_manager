@@ -1,5 +1,6 @@
 from app.core.custom_types import ids
 from app.core.entity import Entity
+from app.core.shared.models.users import BaseUser
 from app.scheduling import custom_exception
 
 from dataclasses import dataclass
@@ -95,9 +96,9 @@ class Meeting(Entity):
             self, user: "User", team: Team
     ) -> MeetingParticipant | None:
         """Add a user to the meeting if all domain rules are satisfied."""
-        self.check_participant(user._id, team)
+        self.check_participant(user.id, team)
         user.check_meeting(self)
-        participant = MeetingParticipant(user._id, self._id)
+        participant = MeetingParticipant(user.id, self._id)
         if participant not in self._participants:
             user._meetings.append(self)
             self._participants.append(participant)
@@ -134,15 +135,15 @@ class Meeting(Entity):
         self._is_cancelled = True
 
 
-class User(Entity):
+class User(BaseUser):
     """User aggregate representing a system participant."""
     def __init__(
             self, id: ids.UserId, username: str,
-            meetings: list[Meeting],
+            meetings: list[Meeting] | None = None,
     ):
-        self._id = id
-        self._username = username
-        self._meetings = meetings
+        self.id = id
+        self.username = username
+        self._meetings = meetings if meetings is not None else []
 
     @property
     def meetings(self) -> tuple[Meeting, ...]:

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from app.core.custom_types import ids, role
+from app.core.shared.models.users import BaseUser
 from app.core.entity import Entity
 from app.core.aggregate import AggregateRoot
 from app.teams import custom_exception
@@ -7,10 +8,9 @@ from app.teams import custom_exception
 from app.core.shared.events import teams as team_event
 
 
-@dataclass(frozen=True)
-class User:
+class User(BaseUser):
     """User teams domain."""
-    id: ids.UserId
+    ...
 
 
 @dataclass(frozen=True)

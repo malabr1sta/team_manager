@@ -26,6 +26,7 @@ class TeamUserOrm(Base, TimestampMixin):
         Integer,
         primary_key=True,
     )
+    username: Mapped[str] = mapped_column(String, nullable=True)
 
 
 class MemberOrm(Base, IdMixin):
@@ -38,7 +39,6 @@ class MemberOrm(Base, IdMixin):
     team_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey(TEAM_FK), nullable=True
     )
-
     role: Mapped[str] = mapped_column(String)
 
 
