@@ -9,7 +9,6 @@ from deps.user import (
     user_uow,
 )
 from app.identity import schemas, dto, use_cases
-from app.identity.orm_models import UserORM
 from app.identity.unit_of_work import IdentitySQLAlchemyUnitOfWork
 
 
@@ -59,10 +58,7 @@ async def update_me(
     user: UserDepend,
     uow: Annotated[IdentitySQLAlchemyUnitOfWork, Depends(user_uow)],
 ):
-    command = dto.UpdateUserCommand(
-        user_id=user.id,
-        username=command_body.username,
-    )
+    command = command_body.model_copy(update={"user_id": user.id})
     return await use_cases.UpdateUserUseCase(uow).execute(command)
 
 

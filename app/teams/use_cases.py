@@ -1,3 +1,5 @@
+from fastapi import HTTPException
+
 from app.teams.unit_of_work import TeamSQLAlchemyUnitOfWork
 from app.teams.custom_exception import UserNotFoundException
 from app.teams import (
@@ -37,7 +39,9 @@ class CreateTeamUseCase:
         5. Commit transaction (publishes events)
         6. Return result
         """
-        user = await self.uow.repos.user.get_by_id(command.user_id)
+        user = await self.uow.repos.user.get_by_id(
+            command.user_id if command.user_id is not None else 0
+        )
         if user is None:
             raise UserNotFoundException(
                 f"User {command.user_id} not found"
@@ -61,3 +65,52 @@ class CreateTeamUseCase:
         )
 
 
+class ReadTeamUseCase:
+    """
+    Use case for creating a new team.
+
+    Business rules:
+    - Creator automatically becomes an admin
+    - Team gets unique identifier
+    - TeamCreated event is recorded and published
+    """
+
+    def __init__(self, uow: TeamSQLAlchemyUnitOfWork):
+        """Initialize with Unit of Work."""
+        self.uow = uow
+
+    async def execute(
+            self,
+            command: dto.TeamReadResponsDTO
+    ) -> dto.TeamReadDTO:
+        user = await self.uow.repos.team.get_by_id(
+            command.user_id if command.user_id is not None else 0
+
+        )
+        if user is None:
+            raise UserNotFoundException(
+                f"User {command.user_id} not found"
+            )
+        team = await self.uow.repos.team.get_by_id(
+            command.team_id
+        )
+        if team is None:
+            raise HTTPException(404, "Team not found")
+        management.TeamQuery(team, ids.UserId(user.id or 0))
+
+        return dto.TeamReadDTO(
+            id=team.id or 0,
+            name=team._name,
+            members=[
+                dto.MemberReadDTO(
+                    user_id=m.user_id,
+                    role=m.role,
+                )
+                for m in team.members
+            ],
+            members_count=len(team.members),
+            created_at=getattr(team, 'created_at', None),
+            updated_at=getattr(team, 'updated_at', None),
+            is_admin=team.is_admin(ids.UserId(user.id or 0)),
+            is_member=True,
+        )

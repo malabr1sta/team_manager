@@ -55,6 +55,13 @@ class TeamManagement(ABC):
         raise NotImplementedError
 
 
+class TeamQuery:
+    """Queries requiring MEMBER access."""
+    def __init__(self, team: Team, user_id: ids.UserId):
+        if not team.is_member(user_id):
+            raise custom_exception.MemberNotFoundException()
+
+
 class ActionAddMemberTeam(TeamManagement):
     """Add a new member to the team."""
 
