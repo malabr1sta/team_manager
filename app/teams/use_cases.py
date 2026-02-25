@@ -66,14 +66,6 @@ class CreateTeamUseCase:
 
 
 class ReadTeamUseCase:
-    """
-    Use case for creating a new team.
-
-    Business rules:
-    - Creator automatically becomes an admin
-    - Team gets unique identifier
-    - TeamCreated event is recorded and published
-    """
 
     def __init__(self, uow: TeamSQLAlchemyUnitOfWork):
         """Initialize with Unit of Work."""

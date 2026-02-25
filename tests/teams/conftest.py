@@ -1,5 +1,6 @@
 import pytest
 from typing import AsyncGenerator
+from fastapi import status
 
 from app.teams import models as teams_models
 from app.core.custom_types import role, ids
@@ -43,3 +44,14 @@ async def teams_uow(
     """Tasks UnitOfWork with automatic context."""
     async with teams_uow_factory as uow:
         yield uow
+
+
+@pytest.fixture
+async def test_team(authenticated_client):
+    """Create test team and return team data."""
+    response = await authenticated_client.post(
+        "/api/v1/teams",
+        json={"team_name": "Test Team"}
+    )
+    assert response.status_code == status.HTTP_201_CREATED
+    return response.json()

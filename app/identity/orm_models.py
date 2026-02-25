@@ -1,5 +1,5 @@
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable
-from sqlalchemy import String, Boolean, Index
+from sqlalchemy import String, Boolean, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
 
@@ -17,8 +17,13 @@ class UserORM(SQLAlchemyBaseUserTable[int], Base):
     """
     __tablename__ = "users"
     __table_args__ = (
-        Index('ix_users_email', 'email'),
         {"schema": SCHEMA} if settings.use_schema else {},
+    )
+
+    id: Mapped[int] = mapped_column(  # type: ignore[assignment]
+        Integer,
+        primary_key=True,
+        autoincrement=True,
     )
 
     username: Mapped[str] = mapped_column(

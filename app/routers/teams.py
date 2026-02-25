@@ -1,9 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, status
 
-from deps.user import (
+from app.deps.user import (
     UserDepend
 )
-from deps.team import (
+from app.deps.team import (
     TeamUoW
 )
 from app.teams import dto, use_cases
@@ -15,7 +15,7 @@ teams_router = APIRouter(
 )
 
 
-@teams_router.post("/")
+@teams_router.post("", status_code=status.HTTP_201_CREATED)
 async def create_team(
         command_body: dto.CreateTeamCommand,
         user: UserDepend,

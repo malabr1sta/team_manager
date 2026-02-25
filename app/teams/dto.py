@@ -10,7 +10,9 @@ class CreateTeamCommand(BaseModel):
     team_name: str = Field(
         ..., min_length=1, max_length=255, description="Team name"
     )
-    user_id: int | None = Field(..., gt=0, description="Creator user ID")
+    user_id: int | None = Field(
+        default=None, gt=0, description="Creator user ID"
+    )
 
 
 class CreateTeamResult(BaseModel):
@@ -49,7 +51,7 @@ class TeamReadDTO(BaseModel):
     """DTO for reading team data."""
     model_config = ConfigDict(frozen=True, from_attributes=True)
 
-    team_id: int = Field(alias="id")
+    id: int
     name: str
     members: list[MemberReadDTO] = Field(default_factory=list)
     members_count: int = 0

@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from deps.user import (
+from app.deps.user import (
     UserDepend,
     fastapi_users,
     auth_backend,
