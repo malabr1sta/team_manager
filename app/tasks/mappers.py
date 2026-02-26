@@ -85,7 +85,7 @@ class TaskTeamMapper:
             TaskMemberOrm(
                 user_id=member.user_id,
                 team_id=member.team_id,
-                role=member.role.value
+                role=member.role
             )
             for member in team.members
         ]
@@ -147,7 +147,7 @@ class TaskMapper:
     def to_domain(orm: TaskOrm) -> Task:
         """ORM -> Domain"""
         executor_id = ids.UserId(orm.executor_id) if orm.executor_id else None
-        return Task(
+        task = Task(
             id=ids.TaskId(orm.id),
             team_id=ids.TeamId(orm.team_id) if orm.team_id else None,
             supervisor_id=ids.UserId(orm.supervisor_id),
@@ -156,8 +156,11 @@ class TaskMapper:
             title=orm.title,
             deadline=orm.deadline,
             status=orm.status,
-            created_at=orm.created_dttm
+            created_at=orm.created_dttm,
+            updated_at=orm.updated_dttm,
         )
+        task._deleted = orm.deleted
+        return task
 
     @staticmethod
     def to_orm(task: Task) -> TaskOrm:
@@ -170,6 +173,7 @@ class TaskMapper:
             title=task.title,
             deadline=task.deadline,
             status=task.status,
+            deleted=task.deleted,
         )
 
     @staticmethod
@@ -182,3 +186,4 @@ class TaskMapper:
         orm.title=task.title
         orm.deadline=task._deadline
         orm.status=task.status
+        orm.deleted=task.deleted
