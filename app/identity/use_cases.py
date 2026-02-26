@@ -62,4 +62,4 @@ def map_identity_exception(exc: Exception) -> HTTPException:
         return HTTPException(409, str(exc))
     if isinstance(exc, ValueError):
         return HTTPException(400, "Invalid user payload")
-    return HTTPException(400, str(exc))
+    return HTTPException(500, "Internal server error")
