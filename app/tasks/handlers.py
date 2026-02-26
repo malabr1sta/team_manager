@@ -1,7 +1,8 @@
 from app.core.shared.events import teams as team_event
+from app.core.shared.handlers.users import UserCreatedHandler
 from app.core.custom_types import ids, role
 from app.core.infrastructure.event import EventHandler
-from app.tasks.models import Team
+from app.tasks.models import Team, TaskUser
 from app.tasks.custom_exception import TeamNotFoundException
 from app.tasks.unit_of_work import (
         TaskSQLAlchemyUnitOfWork
@@ -24,6 +25,12 @@ class TeamCreatedHandler(EventHandler[team_event.TeamCreated]):
             team = Team(ids.TeamId(event.team_id), [])
             await uow.repos.team.save(team)
             await uow.commit()
+
+
+class TaskUserCreatedHandler(
+    UserCreatedHandler[TaskSQLAlchemyUnitOfWork, type[TaskUser]]
+):
+    ...
 
 
 class MemberAddTeamHandler(EventHandler[team_event.MemberAddTeam]):
