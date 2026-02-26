@@ -24,3 +24,4 @@ class UserMapper:
         orm.email = domain.email
         orm.username = domain.username
         orm.deleted = domain.deleted
+        orm.is_active = not domain.deleted

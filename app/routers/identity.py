@@ -59,7 +59,10 @@ async def update_me(
     uow: Annotated[IdentitySQLAlchemyUnitOfWork, Depends(user_uow)],
 ):
     command = command_body.model_copy(update={"user_id": user.id})
-    return await use_cases.UpdateUserUseCase(uow).execute(command)
+    try:
+        return await use_cases.UpdateUserUseCase(uow).execute(command)
+    except Exception as exc:
+        raise use_cases.map_identity_exception(exc)
 
 
 @users_router.delete("/me", status_code=204)
@@ -68,4 +71,7 @@ async def delete_me(
     uow: Annotated[IdentitySQLAlchemyUnitOfWork, Depends(user_uow)],
 ):
     command = dto.DeleteUserCommand(user_id=user.id)
-    await use_cases.DeleteUserUseCase(uow).execute(command)
+    try:
+        await use_cases.DeleteUserUseCase(uow).execute(command)
+    except Exception as exc:
+        raise use_cases.map_identity_exception(exc)

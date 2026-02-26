@@ -1,6 +1,8 @@
 from app.identity.unit_of_work import IdentitySQLAlchemyUnitOfWork
 from app.identity.custom_exception import UserNotFoundException
 from app.identity import dto
+from fastapi import HTTPException
+from app.identity.custom_exception import UserDeleteException
 
 
 class DeleteUserUseCase:
@@ -51,3 +53,13 @@ class UpdateUserUseCase:
             email=user.email,
             username=user.username,
         )
+
+
+def map_identity_exception(exc: Exception) -> HTTPException:
+    if isinstance(exc, UserNotFoundException):
+        return HTTPException(404, str(exc))
+    if isinstance(exc, UserDeleteException):
+        return HTTPException(409, str(exc))
+    if isinstance(exc, ValueError):
+        return HTTPException(400, "Invalid user payload")
+    return HTTPException(400, str(exc))
