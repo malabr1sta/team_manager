@@ -8,7 +8,8 @@ from app.core.infrastructure import event_bus
 from app.core.register_handlers import register_event_handlers
 from app.routers import (
     identity as identity_router,
-    teams as teams_roter
+    teams as teams_roter,
+    tasks as tasks_router,
 )
 
 
@@ -44,3 +45,4 @@ PREFIX = "/api/v1"
 app.include_router(identity_router.auth_router, prefix=PREFIX)
 app.include_router(identity_router.users_router, prefix=PREFIX)
 app.include_router(teams_roter.teams_router, prefix=PREFIX)
+app.include_router(tasks_router.tasks_router, prefix=PREFIX)
