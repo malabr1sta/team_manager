@@ -41,6 +41,12 @@ async def register_event_handlers(
                 ),
                 teams_models.User
             ),
+            tasks_handlers.TaskUserCreatedHandler(
+                tasks_uow.TaskSQLAlchemyUnitOfWork(
+                    session_factory, bus, tasks_uow.TaskRepositoryProvider
+                ),
+                tasks_handlers.TaskUser
+            ),
 
         ],
 

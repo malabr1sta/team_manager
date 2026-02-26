@@ -16,9 +16,13 @@ class DeleteUserUseCase:
 
         Raises UserNotFoundException if user does not exist.
         """
-        user = await self.uow.repos.user.get_by_id(command.user_id)
+        user_id = command.user_id
+        if user_id is None:
+            raise UserNotFoundException("User id is required")
+
+        user = await self.uow.repos.user.get_by_id(user_id)
         if user is None:
-            raise UserNotFoundException(f"User {command.user_id} not found")
+            raise UserNotFoundException(f"User {user_id} not found")
         user.delete()
         await self.uow.repos.user.save(user)
         await self.uow.commit()
@@ -40,14 +44,18 @@ class UpdateUserUseCase:
         Raises UserNotFoundException if user does not exist.
         Returns updated user data.
         """
-        user = await self.uow.repos.user.get_by_id(command.user_id)
+        user_id = command.user_id
+        if user_id is None:
+            raise UserNotFoundException("User id is required")
+
+        user = await self.uow.repos.user.get_by_id(user_id)
         if user is None:
-            raise UserNotFoundException(f"User {command.user_id} not found")
+            raise UserNotFoundException(f"User {user_id} not found")
         user.update(username=command.username)
         await self.uow.repos.user.save(user)
         await self.uow.commit()
         return dto.UpdateUserResult(
-            user_id=command.user_id,
+            user_id=user_id,
             email=user.email,
             username=user.username,
         )
