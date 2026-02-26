@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict, EmailStr
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class DeleteUserCommand(BaseModel):
@@ -8,7 +8,7 @@ class DeleteUserCommand(BaseModel):
 
 class UpdateUserCommand(BaseModel):
     model_config = ConfigDict(frozen=True)
-    user_id: int | None = Field(..., gt=0, description="User ID to update")
+    user_id: int | None = Field(None, gt=0, description="User ID to update")
     username: str | None = Field(
         None, min_length=1, max_length=100, description="New username"
     )
