@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Boolean
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.custom_types import calendar_type
@@ -28,7 +28,15 @@ class CalendarEventOrm(Base, IdMixin, TimestampMixin):
     """Stores calendar event projection."""
 
     __tablename__ = "calendar_event"
-    __table_args__ = TABLE_ARGS
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "event_type",
+            "reference_id",
+            name="uq_calendar_event_user_type_reference",
+        ),
+        *(() if not TABLE_ARGS else (TABLE_ARGS,)),
+    )
 
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey(USER_FK), nullable=False)
     event_type: Mapped[calendar_type.CalendarEventType] = mapped_column(
