@@ -12,13 +12,15 @@ from app.tasks.unit_of_work import (
 )
 from app.tasks import models as tasks_models
 from app.evaluations.unit_of_work import EvaluationSQLAlchemyUnitOfWork
+from app.scheduling.unit_of_work import SchedulingSQLAlchemyUnitOfWork
 
 
 @pytest.mark.anyio
 async def test_task_team_created_after_team_creation(
     registered_event_bus,
     teams_uow: TeamSQLAlchemyUnitOfWork,
-    tasks_uow: TaskSQLAlchemyUnitOfWork
+    tasks_uow: TaskSQLAlchemyUnitOfWork,
+    scheduling_uow: SchedulingSQLAlchemyUnitOfWork,
 ):
     """
     Test that TaskTeam is automatically created when Team is created.
@@ -62,12 +64,17 @@ async def test_task_team_created_after_team_creation(
     assert task_team is not None, "TaskTeam should be created"
     assert task_team.id == team.id, "TaskTeam ID should match Team ID"
 
+    scheduling_team = await scheduling_uow.repos.team.get_by_id(team.id)
+    assert scheduling_team is not None
+    assert scheduling_team.id == team.id
+
 
 @pytest.mark.anyio
 async def test_task_team_add_member(
     created_team: teams_models.Team,
     teams_uow: TeamSQLAlchemyUnitOfWork,
     tasks_uow: TaskSQLAlchemyUnitOfWork,
+    scheduling_uow: SchedulingSQLAlchemyUnitOfWork,
     init_user
 ):
     team = created_team
@@ -96,6 +103,12 @@ async def test_task_team_add_member(
         user_id_manager, role.UserTaskRole.MANAGER
     )
     assert len(team_task._members) == 2
+    scheduling_team = await scheduling_uow.repos.team.get_by_id(team.id)
+    assert scheduling_team is not None
+    assert scheduling_team.is_member(user_id_member)
+    assert scheduling_team.is_member(user_id_manager)
+    assert scheduling_team.is_manager(user_id_manager)
+    assert not scheduling_team.is_manager(user_id_member)
 
 
 @pytest.mark.anyio
@@ -103,6 +116,7 @@ async def test_task_team_remove_member(
     created_team: teams_models.Team,
     teams_uow: TeamSQLAlchemyUnitOfWork,
     tasks_uow: TaskSQLAlchemyUnitOfWork,
+    scheduling_uow: SchedulingSQLAlchemyUnitOfWork,
     init_user
 ):
     team = created_team
@@ -122,6 +136,9 @@ async def test_task_team_remove_member(
     team_task = await tasks_uow.repos.team.get_by_id(team.id)
     assert team_task is not None
     assert len(team_task._members) == 2
+    scheduling_team = await scheduling_uow.repos.team.get_by_id(team.id)
+    assert scheduling_team is not None
+    assert len(scheduling_team.members) == 2
 
     team.remove_member(user_id_member, role.UserRole.MEMBER)
     await teams_uow.repos.team.save(team)
@@ -130,6 +147,9 @@ async def test_task_team_remove_member(
     team_task = await tasks_uow.repos.team.get_by_id(team.id)
     assert team_task is not None
     assert not team_task.has_member(user_id_member, role.UserTaskRole.MEMBER)
+    scheduling_team = await scheduling_uow.repos.team.get_by_id(team.id)
+    assert scheduling_team is not None
+    assert not scheduling_team.is_member(user_id_member)
 
     team.remove_member(user_id_manager, role.UserRole.MANAGER)
     await teams_uow.repos.team.save(team)
@@ -138,6 +158,9 @@ async def test_task_team_remove_member(
     team_task = await tasks_uow.repos.team.get_by_id(team.id)
     assert team_task is not None
     assert not team_task.has_member(user_id_manager, role.UserTaskRole.MANAGER)
+    scheduling_team = await scheduling_uow.repos.team.get_by_id(team.id)
+    assert scheduling_team is not None
+    assert not scheduling_team.is_member(user_id_manager)
 
 
 @pytest.mark.anyio
@@ -145,6 +168,7 @@ async def test_task_team_change_role(
     created_team: teams_models.Team,
     teams_uow: TeamSQLAlchemyUnitOfWork,
     tasks_uow: TaskSQLAlchemyUnitOfWork,
+    scheduling_uow: SchedulingSQLAlchemyUnitOfWork,
     init_user
 ):
     team = created_team
@@ -170,6 +194,9 @@ async def test_task_team_change_role(
     assert team_task is not None
     assert team_task.has_member(user_id_member, role.UserTaskRole.MANAGER)
     assert not team_task.has_member(user_id_member, role.UserTaskRole.MEMBER)
+    scheduling_team = await scheduling_uow.repos.team.get_by_id(team.id)
+    assert scheduling_team is not None
+    assert scheduling_team.is_manager(user_id_member)
 
     team.change_role(
         user_id_member,
@@ -182,6 +209,9 @@ async def test_task_team_change_role(
     team_task = await tasks_uow.repos.team.get_by_id(team.id)
     assert team_task is not None
     assert len(team_task._members) == 1
+    scheduling_team = await scheduling_uow.repos.team.get_by_id(team.id)
+    assert scheduling_team is not None
+    assert not scheduling_team.is_member(user_id_member)
 
     team.change_role(
         user_id_member,
@@ -193,6 +223,10 @@ async def test_task_team_change_role(
     team_task = await tasks_uow.repos.team.get_by_id(team.id)
     assert team_task is not None
     assert len(team_task._members) == 2
+    scheduling_team = await scheduling_uow.repos.team.get_by_id(team.id)
+    assert scheduling_team is not None
+    assert scheduling_team.is_member(user_id_member)
+    assert not scheduling_team.is_manager(user_id_member)
 
 
 @pytest.mark.anyio
@@ -201,6 +235,7 @@ async def test_user_updated_event_updates_projections(
     teams_uow: TeamSQLAlchemyUnitOfWork,
     tasks_uow: TaskSQLAlchemyUnitOfWork,
     evaluations_uow: EvaluationSQLAlchemyUnitOfWork,
+    scheduling_uow: SchedulingSQLAlchemyUnitOfWork,
 ):
     await registered_event_bus.publish(
         user_event.UserRegistered(user_id=501, username="initial_name")
@@ -213,14 +248,17 @@ async def test_user_updated_event_updates_projections(
     team_user = await teams_uow.repos.user.get_by_id(501)
     task_user = await tasks_uow.repos.user.get_by_id(501)
     evaluation_user = await evaluations_uow.repos.user.get_by_id(501)
+    scheduling_user = await scheduling_uow.repos.user.get_by_id(501)
 
     assert team_user is not None
     assert task_user is not None
     assert evaluation_user is not None
+    assert scheduling_user is not None
 
     assert team_user.username == "updated_name"
     assert task_user.username == "updated_name"
     assert evaluation_user.username == "updated_name"
+    assert scheduling_user.username == "updated_name"
 
 
 @pytest.mark.anyio
@@ -229,6 +267,7 @@ async def test_user_deleted_event_marks_projections(
     teams_uow: TeamSQLAlchemyUnitOfWork,
     tasks_uow: TaskSQLAlchemyUnitOfWork,
     evaluations_uow: EvaluationSQLAlchemyUnitOfWork,
+    scheduling_uow: SchedulingSQLAlchemyUnitOfWork,
 ):
     await registered_event_bus.publish(
         user_event.UserRegistered(user_id=777, username="to_delete")
@@ -241,11 +280,14 @@ async def test_user_deleted_event_marks_projections(
     team_user = await teams_uow.repos.user.get_by_id(777)
     task_user = await tasks_uow.repos.user.get_by_id(777)
     evaluation_user = await evaluations_uow.repos.user.get_by_id(777)
+    scheduling_user = await scheduling_uow.repos.user.get_by_id(777)
 
     assert team_user is not None
     assert task_user is not None
     assert evaluation_user is not None
+    assert scheduling_user is not None
 
     assert team_user.username == "deleted_user"
     assert task_user.username == "deleted_user"
     assert evaluation_user.username == "deleted_user"
+    assert scheduling_user.username == "deleted_user"

@@ -13,6 +13,7 @@ from app.core.register_handlers import register_event_handlers
 from app.routers import (
     evaluations as evaluations_router,
     identity as identity_router,
+    scheduling as scheduling_router,
     teams as teams_roter,
     tasks as tasks_router,
 )
@@ -84,6 +85,7 @@ async def test_app():
     app.include_router(teams_roter.teams_router, prefix=PREFIX)
     app.include_router(tasks_router.tasks_router, prefix=PREFIX)
     app.include_router(evaluations_router.evaluations_router, prefix=PREFIX)
+    app.include_router(scheduling_router.scheduling_router, prefix=PREFIX)
 
     yield app
     await engine.dispose()

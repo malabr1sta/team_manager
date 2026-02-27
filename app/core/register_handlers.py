@@ -7,6 +7,11 @@ from app.evaluations import (
     models as evaluations_models,
     unit_of_work as evaluations_uow,
 )
+from app.scheduling import (
+    handlers as scheduling_handlers,
+    models as scheduling_models,
+    unit_of_work as scheduling_uow,
+)
 from app.tasks import (
     handlers as tasks_handlers,
     unit_of_work as tasks_uow
@@ -61,6 +66,14 @@ async def register_event_handlers(
                 ),
                 evaluations_models.User,
             ),
+            scheduling_handlers.SchedulingUserCreatedHandler(
+                scheduling_uow.SchedulingSQLAlchemyUnitOfWork(
+                    session_factory,
+                    bus,
+                    scheduling_uow.SchedulingRepositoryProvider,
+                ),
+                scheduling_models.User,
+            ),
 
         ],
 
@@ -85,6 +98,14 @@ async def register_event_handlers(
                 ),
                 evaluations_models.User,
             ),
+            scheduling_handlers.SchedulingUserUpdatedHandler(
+                scheduling_uow.SchedulingSQLAlchemyUnitOfWork(
+                    session_factory,
+                    bus,
+                    scheduling_uow.SchedulingRepositoryProvider,
+                ),
+                scheduling_models.User,
+            ),
         ],
 
         user_event.UserDeleted: [
@@ -108,6 +129,14 @@ async def register_event_handlers(
                 ),
                 evaluations_models.User,
             ),
+            scheduling_handlers.SchedulingUserDeletedHandler(
+                scheduling_uow.SchedulingSQLAlchemyUnitOfWork(
+                    session_factory,
+                    bus,
+                    scheduling_uow.SchedulingRepositoryProvider,
+                ),
+                scheduling_models.User,
+            ),
         ],
 
         team_event.TeamCreated: [
@@ -115,6 +144,11 @@ async def register_event_handlers(
             tasks_handlers.TeamCreatedHandler(
                 tasks_uow.TaskSQLAlchemyUnitOfWork(
                     session_factory, bus, tasks_uow.TaskRepositoryProvider
+                ),
+            ),
+            scheduling_handlers.SchedulingTeamCreatedHandler(
+                scheduling_uow.SchedulingSQLAlchemyUnitOfWork(
+                    session_factory, bus, scheduling_uow.SchedulingRepositoryProvider
                 ),
             ),
 
@@ -127,6 +161,11 @@ async def register_event_handlers(
                     session_factory, bus, tasks_uow.TaskRepositoryProvider
                 ),
             ),
+            scheduling_handlers.SchedulingMemberAddHandler(
+                scheduling_uow.SchedulingSQLAlchemyUnitOfWork(
+                    session_factory, bus, scheduling_uow.SchedulingRepositoryProvider
+                ),
+            ),
 
         ],
 
@@ -137,6 +176,11 @@ async def register_event_handlers(
                     session_factory, bus, tasks_uow.TaskRepositoryProvider
                 ),
             ),
+            scheduling_handlers.SchedulingMemberRemoveHandler(
+                scheduling_uow.SchedulingSQLAlchemyUnitOfWork(
+                    session_factory, bus, scheduling_uow.SchedulingRepositoryProvider
+                ),
+            ),
 
         ],
 
@@ -145,6 +189,11 @@ async def register_event_handlers(
             tasks_handlers.MemberChangeRoleHandler(
                 tasks_uow.TaskSQLAlchemyUnitOfWork(
                     session_factory, bus, tasks_uow.TaskRepositoryProvider
+                ),
+            ),
+            scheduling_handlers.SchedulingMemberChangeRoleHandler(
+                scheduling_uow.SchedulingSQLAlchemyUnitOfWork(
+                    session_factory, bus, scheduling_uow.SchedulingRepositoryProvider
                 ),
             ),
 
