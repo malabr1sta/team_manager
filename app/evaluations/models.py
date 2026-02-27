@@ -98,8 +98,24 @@ class Task(Entity):
         self._status = status
 
     @property
+    def id(self) -> ids.TaskId:
+        return self._id
+
+    @property
+    def team_id(self) -> ids.TeamId:
+        return self._team_id
+
+    @property
     def supervisor_id(self) -> ids.UserId:
         return self._supervisor_id
+
+    @property
+    def executor_id(self) -> ids.UserId:
+        return self._executor_id
+
+    @property
+    def status(self) -> task_status.TaskStatus:
+        return self._status
 
     def create_evaluation(self, grade: grade.Grade) -> Evaluation:
         """Set Evaluation if status is done"""
