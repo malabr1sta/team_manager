@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 
-from app.core.custom_types import ids, task_status
+from app.core.custom_types import ids, task_patch, task_status
 from app.tasks import custom_exception, dto, management
 from app.tasks.models import Task
 from app.tasks.unit_of_work import TaskSQLAlchemyUnitOfWork
@@ -27,6 +27,9 @@ def map_task_exception(exc: Exception) -> HTTPException:
 
 
 def _to_task_dto(task: Task) -> dto.TaskReadDTO:
+    deadline = task.deadline
+    if deadline is None:
+        raise HTTPException(400, "Task deadline is missing")
     return dto.TaskReadDTO(
         id=task.id or 0,
         team_id=task.team_id,
@@ -35,7 +38,7 @@ def _to_task_dto(task: Task) -> dto.TaskReadDTO:
         title=task.title,
         description=task.description,
         status=task.status.value,
-        deadline=task.deadline,
+        deadline=deadline,
         created_at=task.created_at,
         updated_at=task.updated_at,
         deleted=task.deleted,
@@ -159,7 +162,7 @@ class UpdateTaskUseCase:
         if task is None:
             raise HTTPException(404, "Task not found")
         action = management.ActionUpdateTask(task, ids.UserId(command.actor_user_id))
-        update_payload: dict[str, object] = {}
+        update_payload: task_patch.TaskUpdateArgs = {}
         if command.title is not None:
             update_payload["title"] = command.title
         if command.description is not None:

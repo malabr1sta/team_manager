@@ -2,13 +2,15 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.core.custom_types import grade as grade_type
+
 
 class CreateEvaluationCommand(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     task_id: int | None = Field(default=None, gt=0)
     actor_user_id: int | None = Field(default=None, gt=0)
-    grade: int = Field(..., ge=1, le=5)
+    grade: grade_type.Grade = Field(...)
 
 
 class EvaluationReadDTO(BaseModel):
@@ -17,7 +19,7 @@ class EvaluationReadDTO(BaseModel):
     user_id: int
     team_id: int
     task_id: int
-    grade: int
+    grade: grade_type.Grade
     created_at: datetime
 
 
