@@ -11,6 +11,7 @@ from app.core.database import Base
 from app.core.infrastructure.event_bus import MemoryEventBus
 from app.core.register_handlers import register_event_handlers
 from app.routers import (
+    calendar as calendar_router,
     evaluations as evaluations_router,
     identity as identity_router,
     scheduling as scheduling_router,
@@ -86,6 +87,7 @@ async def test_app():
     app.include_router(tasks_router.tasks_router, prefix=PREFIX)
     app.include_router(evaluations_router.evaluations_router, prefix=PREFIX)
     app.include_router(scheduling_router.scheduling_router, prefix=PREFIX)
+    app.include_router(calendar_router.calendar_router, prefix=PREFIX)
 
     yield app
     await engine.dispose()

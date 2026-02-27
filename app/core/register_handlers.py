@@ -1,5 +1,11 @@
+from app.calendar import (
+    handlers as calendar_handlers,
+    models as calendar_models,
+    unit_of_work as calendar_uow,
+)
 from app.core.shared.events import teams as team_event
 from app.core.shared.events import identity as user_event
+from app.core.shared.events import meetings as meeting_event
 from app.core.shared.events import tasks as task_event
 from app.core.infrastructure.event import EventBus
 from app.evaluations import (
@@ -74,6 +80,14 @@ async def register_event_handlers(
                 ),
                 scheduling_models.User,
             ),
+            calendar_handlers.CalendarUserCreatedHandler(
+                calendar_uow.CalendarSQLAlchemyUnitOfWork(
+                    session_factory,
+                    bus,
+                    calendar_uow.CalendarRepositoryProvider,
+                ),
+                calendar_models.CalendarUser,
+            ),
 
         ],
 
@@ -106,6 +120,14 @@ async def register_event_handlers(
                 ),
                 scheduling_models.User,
             ),
+            calendar_handlers.CalendarUserUpdatedHandler(
+                calendar_uow.CalendarSQLAlchemyUnitOfWork(
+                    session_factory,
+                    bus,
+                    calendar_uow.CalendarRepositoryProvider,
+                ),
+                calendar_models.CalendarUser,
+            ),
         ],
 
         user_event.UserDeleted: [
@@ -136,6 +158,14 @@ async def register_event_handlers(
                     scheduling_uow.SchedulingRepositoryProvider,
                 ),
                 scheduling_models.User,
+            ),
+            calendar_handlers.CalendarUserDeletedHandler(
+                calendar_uow.CalendarSQLAlchemyUnitOfWork(
+                    session_factory,
+                    bus,
+                    calendar_uow.CalendarRepositoryProvider,
+                ),
+                calendar_models.CalendarUser,
             ),
         ],
 
@@ -207,6 +237,13 @@ async def register_event_handlers(
                     evaluations_uow.EvaluationRepositoryProvider,
                 ),
             ),
+            calendar_handlers.CalendarTaskCreatedHandler(
+                calendar_uow.CalendarSQLAlchemyUnitOfWork(
+                    session_factory,
+                    bus,
+                    calendar_uow.CalendarRepositoryProvider,
+                ),
+            ),
         ],
 
         task_event.TaskUpdated: [
@@ -215,6 +252,43 @@ async def register_event_handlers(
                     session_factory,
                     bus,
                     evaluations_uow.EvaluationRepositoryProvider,
+                ),
+            ),
+            calendar_handlers.CalendarTaskUpdatedHandler(
+                calendar_uow.CalendarSQLAlchemyUnitOfWork(
+                    session_factory,
+                    bus,
+                    calendar_uow.CalendarRepositoryProvider,
+                ),
+            ),
+        ],
+
+        meeting_event.MeetingCreated: [
+            calendar_handlers.CalendarMeetingCreatedHandler(
+                calendar_uow.CalendarSQLAlchemyUnitOfWork(
+                    session_factory,
+                    bus,
+                    calendar_uow.CalendarRepositoryProvider,
+                ),
+            ),
+        ],
+
+        meeting_event.MeetingUpdated: [
+            calendar_handlers.CalendarMeetingUpdatedHandler(
+                calendar_uow.CalendarSQLAlchemyUnitOfWork(
+                    session_factory,
+                    bus,
+                    calendar_uow.CalendarRepositoryProvider,
+                ),
+            ),
+        ],
+
+        meeting_event.MeetingCancelled: [
+            calendar_handlers.CalendarMeetingCancelledHandler(
+                calendar_uow.CalendarSQLAlchemyUnitOfWork(
+                    session_factory,
+                    bus,
+                    calendar_uow.CalendarRepositoryProvider,
                 ),
             ),
         ],

@@ -10,19 +10,7 @@ class CalendarUser(BaseUser):
 
 
 class CalendarEvent(Entity):
-    """
-    Represents a single calendar event for a user.
-
-    Attributes:
-        user_id: ID of the user who owns the event.
-        id: Unique ID of the calendar event.
-        type: Role/type of the event (task, meeting, etc.).
-        title: Title of the event.
-        description: Description of the event.
-        time: Date and time of the event.
-        reference_id: ID of the related task or meeting.
-        cancelled: Whether the event is cancelled.
-    """
+    """Represents one user calendar event."""
 
     def __init__(
         self,
@@ -44,15 +32,44 @@ class CalendarEvent(Entity):
         self._reference_id = reference_id
         self._cancelled = cancelled
 
+    @property
+    def id(self) -> ids.CalendarEventId:
+        return self._id
+
+    @property
+    def user_id(self) -> ids.UserId:
+        return self._user_id
+
+    @property
+    def type(self) -> calendar_type.CalendarEventType:
+        return self._type
+
+    @property
+    def title(self) -> str:
+        return self._title
+
+    @property
+    def description(self) -> str:
+        return self._description
+
+    @property
+    def time(self) -> datetime:
+        return self._time
+
+    @property
+    def reference_id(self) -> ids.TaskId | ids.MeetingId:
+        return self._reference_id
+
+    @property
+    def cancelled(self) -> bool:
+        return bool(self._cancelled)
+
+    def mark_cancelled(self) -> None:
+        self._cancelled = True
+
 
 class Calendar(Entity):
-    """
-    In-memory calendar for storing and accessing user events.
-
-    Note:
-        Calendar instances are not intended to be persisted in a database.
-        Used only for filtering events by day or month.
-    """
+    """Stores and filters user calendar events."""
 
     def __init__(
         self, user_id: ids.UserId,
@@ -61,6 +78,14 @@ class Calendar(Entity):
     ):
         self._user_id = user_id
         self._calendar_events = calendar_events
+
+    @property
+    def user_id(self) -> ids.UserId:
+        return self._user_id
+
+    @property
+    def calendar_events(self) -> tuple[CalendarEvent, ...]:
+        return tuple(self._calendar_events)
 
     def events_for_day(self, date: datetime) -> list[CalendarEvent]:
         """Returns a list of events for a specific day."""

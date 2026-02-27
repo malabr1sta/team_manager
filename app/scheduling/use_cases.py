@@ -124,6 +124,9 @@ class AddParticipantUseCase:
         meeting = await self.uow.repos.meeting.get_by_id(meeting_id)
         if meeting is None:
             raise HTTPException(404, "Meeting not found")
+        previous_participant_ids = [
+            int(item.user_id) for item in meeting.participants if item is not None
+        ]
         team = await self.uow.repos.team.get_by_id(meeting.team_id)
         if team is None:
             raise HTTPException(404, "Team not found")
@@ -135,6 +138,7 @@ class AddParticipantUseCase:
             meeting=meeting,
         )
         action.execute(user=user, team=team)
+        meeting.mark_updated_event(previous_participant_ids)
         await self.uow.repos.meeting.save(meeting)
         await self.uow.commit()
         return _to_meeting_dto(meeting)
@@ -153,11 +157,15 @@ class RemoveParticipantUseCase:
         meeting = await self.uow.repos.meeting.get_by_id(meeting_id)
         if meeting is None:
             raise HTTPException(404, "Meeting not found")
+        previous_participant_ids = [
+            int(item.user_id) for item in meeting.participants if item is not None
+        ]
         action = management.ActionRemoveMeeting(
             user_id=ids.UserId(actor_user_id),
             meeting=meeting,
         )
         action.execute(ids.UserId(target_user_id))
+        meeting.mark_updated_event(previous_participant_ids)
         await self.uow.repos.meeting.save(meeting)
         await self.uow.commit()
         return _to_meeting_dto(meeting)
@@ -178,6 +186,7 @@ class CancelMeetingUseCase:
             meeting=meeting,
         )
         action.execute()
+        meeting.mark_cancelled_event()
         await self.uow.repos.meeting.save(meeting)
         await self.uow.commit()
         return _to_meeting_dto(meeting)

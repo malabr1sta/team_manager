@@ -1,5 +1,7 @@
 from app.core.custom_types import ids
+from app.core.aggregate import AggregateRoot
 from app.core.entity import Entity
+from app.core.shared.events import meetings as meeting_event
 from app.core.shared.models.users import BaseUser
 from app.scheduling import custom_exception
 
@@ -94,7 +96,7 @@ class MeetingParticipant:
     meeting_id: ids.MeetingId | None
 
 
-class Meeting(Entity):
+class Meeting(Entity, AggregateRoot):
     """Meeting aggregate representing a scheduled team event."""
 
     def __init__(
@@ -107,6 +109,7 @@ class Meeting(Entity):
         description: str = "",
         is_cancelled: bool = False,
     ):
+        AggregateRoot.__init__(self)
         self._id = id
         self._team_id = team_id
         self._organizer_id = organizer_id
@@ -115,6 +118,58 @@ class Meeting(Entity):
         self._participants = participants
         self._start = start
         self._end = end
+
+    def _participant_ids(self) -> list[int]:
+        return [
+            int(participant.user_id)
+            for participant in self._participants
+            if participant is not None
+        ]
+
+    def mark_created_event(self) -> None:
+        if self._id is None:
+            return
+        self.record_event(
+            meeting_event.MeetingCreated(
+                meeting_id=int(self._id),
+                team_id=int(self._team_id),
+                organizer_id=int(self._organizer_id),
+                participant_ids=self._participant_ids(),
+                start=self._start,
+                end=self._end,
+                description=self._description,
+                is_cancelled=self._is_cancelled,
+            )
+        )
+
+    def mark_updated_event(self, previous_participant_ids: list[int]) -> None:
+        if self._id is None:
+            return
+        self.record_event(
+            meeting_event.MeetingUpdated(
+                meeting_id=int(self._id),
+                team_id=int(self._team_id),
+                organizer_id=int(self._organizer_id),
+                participant_ids=self._participant_ids(),
+                previous_participant_ids=previous_participant_ids,
+                start=self._start,
+                end=self._end,
+                description=self._description,
+                is_cancelled=self._is_cancelled,
+            )
+        )
+
+    def mark_cancelled_event(self) -> None:
+        if self._id is None:
+            return
+        self.record_event(
+            meeting_event.MeetingCancelled(
+                meeting_id=int(self._id),
+                team_id=int(self._team_id),
+                organizer_id=int(self._organizer_id),
+                participant_ids=self._participant_ids(),
+            )
+        )
 
     @property
     def id(self) -> ids.MeetingId | None:
