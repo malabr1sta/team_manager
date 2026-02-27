@@ -185,5 +185,8 @@ class SQLAlchemyTaskRepository(AbstractRepository[models.Task]):
             self.session.add(orm_task)
             await self.session.flush()
             domain._id = ids.TaskId(orm_task.id)
+            domain.mark_created_event()
+            self.uow._seen.add(domain)
             return
         mappers.TaskMapper.update_orm(task_orm, domain)
+        self.uow._seen.add(domain)

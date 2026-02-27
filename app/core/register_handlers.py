@@ -1,6 +1,12 @@
 from app.core.shared.events import teams as team_event
 from app.core.shared.events import identity as user_event
+from app.core.shared.events import tasks as task_event
 from app.core.infrastructure.event import EventBus
+from app.evaluations import (
+    handlers as evaluations_handlers,
+    models as evaluations_models,
+    unit_of_work as evaluations_uow,
+)
 from app.tasks import (
     handlers as tasks_handlers,
     unit_of_work as tasks_uow
@@ -47,6 +53,14 @@ async def register_event_handlers(
                 ),
                 tasks_handlers.TaskUser
             ),
+            evaluations_handlers.EvaluationUserCreatedHandler(
+                evaluations_uow.EvaluationSQLAlchemyUnitOfWork(
+                    session_factory,
+                    bus,
+                    evaluations_uow.EvaluationRepositoryProvider,
+                ),
+                evaluations_models.User,
+            ),
 
         ],
 
@@ -88,6 +102,26 @@ async def register_event_handlers(
                 ),
             ),
 
+        ],
+
+        task_event.TaskCreated: [
+            evaluations_handlers.EvaluationTaskCreatedHandler(
+                evaluations_uow.EvaluationSQLAlchemyUnitOfWork(
+                    session_factory,
+                    bus,
+                    evaluations_uow.EvaluationRepositoryProvider,
+                ),
+            ),
+        ],
+
+        task_event.TaskUpdated: [
+            evaluations_handlers.EvaluationTaskUpdatedHandler(
+                evaluations_uow.EvaluationSQLAlchemyUnitOfWork(
+                    session_factory,
+                    bus,
+                    evaluations_uow.EvaluationRepositoryProvider,
+                ),
+            ),
         ],
 
 

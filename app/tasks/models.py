@@ -1,8 +1,10 @@
 from typing import Unpack
 from datetime import datetime, timezone
 from app.core.custom_types import ids, role, task_status, task_patch
+from app.core.aggregate import AggregateRoot
 from app.core.entity import Entity
 from app.core.shared.models.users import BaseUser
+from app.core.shared.events import tasks as task_event
 from app.tasks import custom_exception
 
 from dataclasses import dataclass
@@ -150,7 +152,7 @@ class Comment(Entity):
         return self._created_at
 
 
-class Task(Entity):
+class Task(Entity, AggregateRoot):
     """
     Represents a task in a team.
 
@@ -180,6 +182,7 @@ class Task(Entity):
                  updated_at: datetime | None = None
 
     ):
+        AggregateRoot.__init__(self)
         self._id = id
         self._supervisor_id = supervisor_id
         self._team_id = team_id
@@ -255,6 +258,15 @@ class Task(Entity):
     ):
         self.check_member(user_id, role.UserTaskRole.MEMBER, team)
         self._executor_id = user_id
+        self.record_event(
+            task_event.TaskUpdated(
+                task_id=int(self._id or 0),
+                team_id=int(self._team_id or 0),
+                supervisor_id=int(self._supervisor_id),
+                executor_id=int(self._executor_id),
+                status=self._status.value,
+            )
+        )
 
     def update_task(
         self, **args: Unpack[task_patch.TaskUpdateArgs]
@@ -271,3 +283,25 @@ class Task(Entity):
                 setattr(self, attr_name, args[arg_name])
 
         self._updated_at = datetime.now(timezone.utc)
+        self.record_event(
+            task_event.TaskUpdated(
+                task_id=int(self._id or 0),
+                team_id=int(self._team_id or 0),
+                supervisor_id=int(self._supervisor_id),
+                executor_id=int(self._executor_id) if self._executor_id else None,
+                status=self._status.value,
+            )
+        )
+
+    def mark_created_event(self) -> None:
+        if self._id is None or self._team_id is None:
+            return
+        self.record_event(
+            task_event.TaskCreated(
+                task_id=int(self._id),
+                team_id=int(self._team_id),
+                supervisor_id=int(self._supervisor_id),
+                executor_id=int(self._executor_id) if self._executor_id else None,
+                status=self._status.value,
+            )
+        )
