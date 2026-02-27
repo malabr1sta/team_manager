@@ -1,4 +1,6 @@
-from app.core.custom_types import ids
+from typing import cast
+
+from app.core.custom_types import grade as grade_type, ids
 from app.evaluations import models
 from app.evaluations.orm_models import EvaluationOrm, EvaluationTaskOrm, EvaluationUserOrm
 
@@ -60,7 +62,7 @@ class EvaluationMapper:
             user_id=ids.UserId(orm.user_id),
             team_id=ids.TeamId(orm.team_id),
             task_id=ids.TaskId(orm.task_id),
-            grade=orm.grade,
+            grade=cast(grade_type.Grade, orm.grade),
             created_at=orm.created_dttm,
         )
 
