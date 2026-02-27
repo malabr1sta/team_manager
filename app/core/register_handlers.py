@@ -64,6 +64,52 @@ async def register_event_handlers(
 
         ],
 
+        user_event.UserUpdated: [
+            teams_handlers.TeamUserUpdatedHandler(
+                teams_uow.TeamSQLAlchemyUnitOfWork(
+                    session_factory, bus, teams_uow.TeamRepositoryProvider
+                ),
+                teams_models.User,
+            ),
+            tasks_handlers.TaskUserUpdatedHandler(
+                tasks_uow.TaskSQLAlchemyUnitOfWork(
+                    session_factory, bus, tasks_uow.TaskRepositoryProvider
+                ),
+                tasks_handlers.TaskUser,
+            ),
+            evaluations_handlers.EvaluationUserUpdatedHandler(
+                evaluations_uow.EvaluationSQLAlchemyUnitOfWork(
+                    session_factory,
+                    bus,
+                    evaluations_uow.EvaluationRepositoryProvider,
+                ),
+                evaluations_models.User,
+            ),
+        ],
+
+        user_event.UserDeleted: [
+            teams_handlers.TeamUserDeletedHandler(
+                teams_uow.TeamSQLAlchemyUnitOfWork(
+                    session_factory, bus, teams_uow.TeamRepositoryProvider
+                ),
+                teams_models.User,
+            ),
+            tasks_handlers.TaskUserDeletedHandler(
+                tasks_uow.TaskSQLAlchemyUnitOfWork(
+                    session_factory, bus, tasks_uow.TaskRepositoryProvider
+                ),
+                tasks_handlers.TaskUser,
+            ),
+            evaluations_handlers.EvaluationUserDeletedHandler(
+                evaluations_uow.EvaluationSQLAlchemyUnitOfWork(
+                    session_factory,
+                    bus,
+                    evaluations_uow.EvaluationRepositoryProvider,
+                ),
+                evaluations_models.User,
+            ),
+        ],
+
         team_event.TeamCreated: [
 
             tasks_handlers.TeamCreatedHandler(

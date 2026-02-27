@@ -1,13 +1,29 @@
 from app.core.custom_types import ids, task_status
 from app.core.infrastructure.event import EventHandler
 from app.core.shared.events import tasks as task_event
-from app.core.shared.handlers.users import UserCreatedHandler
+from app.core.shared.handlers.users import (
+    UserCreatedHandler,
+    UserDeletedHandler,
+    UserUpdatedHandler,
+)
 from app.evaluations.models import Task, User
 from app.evaluations.unit_of_work import EvaluationSQLAlchemyUnitOfWork
 
 
 class EvaluationUserCreatedHandler(
     UserCreatedHandler[EvaluationSQLAlchemyUnitOfWork, type[User]]
+):
+    ...
+
+
+class EvaluationUserUpdatedHandler(
+    UserUpdatedHandler[EvaluationSQLAlchemyUnitOfWork, type[User]]
+):
+    ...
+
+
+class EvaluationUserDeletedHandler(
+    UserDeletedHandler[EvaluationSQLAlchemyUnitOfWork, type[User]]
 ):
     ...
 

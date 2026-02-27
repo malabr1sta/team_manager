@@ -26,8 +26,8 @@ class UserDeleted(UserEvent):
     user_id: int
 
 
-@dataclass(frozen=True)
-class UserVerified(UserEvent):
-    """Event: User verified their email in Identity context."""
-    user_id: int
-    email: str
+# @dataclass(frozen=True)
+# class UserVerified(UserEvent):
+#     """Event: User verified their email in Identity context."""
+#     user_id: int
+#     email: str

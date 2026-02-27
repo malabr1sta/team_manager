@@ -17,6 +17,10 @@ from app.tasks.unit_of_work import (
     TaskSQLAlchemyUnitOfWork,
     TaskRepositoryProvider
 )
+from app.evaluations.unit_of_work import (
+    EvaluationSQLAlchemyUnitOfWork,
+    EvaluationRepositoryProvider,
+)
 from app.core.custom_types import ids
 from app.teams import (
     management as teams_management,
@@ -94,6 +98,23 @@ def tasks_uow_factory(async_session_factory, event_bus):
 async def tasks_uow(tasks_uow_factory):
     """Tasks UnitOfWork with automatic context."""
     async with tasks_uow_factory as uow:
+        yield uow
+
+
+@pytest.fixture(scope="function")
+def evaluations_uow_factory(async_session_factory, event_bus):
+    """Factory for Evaluations UnitOfWork."""
+    return EvaluationSQLAlchemyUnitOfWork(
+        session_factory=async_session_factory,
+        bus=event_bus,
+        provider_cls=EvaluationRepositoryProvider,
+    )
+
+
+@pytest.fixture
+async def evaluations_uow(evaluations_uow_factory):
+    """Evaluations UnitOfWork with automatic context."""
+    async with evaluations_uow_factory as uow:
         yield uow
 
 

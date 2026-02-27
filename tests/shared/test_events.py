@@ -1,6 +1,7 @@
 import pytest
 
 from app.core.custom_types import ids, role
+from app.core.shared.events import identity as user_event
 from app.teams import (
     management as teams_management,
     models as teams_models
@@ -10,6 +11,7 @@ from app.tasks.unit_of_work import (
     TaskSQLAlchemyUnitOfWork,
 )
 from app.tasks import models as tasks_models
+from app.evaluations.unit_of_work import EvaluationSQLAlchemyUnitOfWork
 
 
 @pytest.mark.anyio
@@ -191,3 +193,59 @@ async def test_task_team_change_role(
     team_task = await tasks_uow.repos.team.get_by_id(team.id)
     assert team_task is not None
     assert len(team_task._members) == 2
+
+
+@pytest.mark.anyio
+async def test_user_updated_event_updates_projections(
+    registered_event_bus,
+    teams_uow: TeamSQLAlchemyUnitOfWork,
+    tasks_uow: TaskSQLAlchemyUnitOfWork,
+    evaluations_uow: EvaluationSQLAlchemyUnitOfWork,
+):
+    await registered_event_bus.publish(
+        user_event.UserRegistered(user_id=501, username="initial_name")
+    )
+
+    await registered_event_bus.publish(
+        user_event.UserUpdated(user_id=501, username="updated_name")
+    )
+
+    team_user = await teams_uow.repos.user.get_by_id(501)
+    task_user = await tasks_uow.repos.user.get_by_id(501)
+    evaluation_user = await evaluations_uow.repos.user.get_by_id(501)
+
+    assert team_user is not None
+    assert task_user is not None
+    assert evaluation_user is not None
+
+    assert team_user.username == "updated_name"
+    assert task_user.username == "updated_name"
+    assert evaluation_user.username == "updated_name"
+
+
+@pytest.mark.anyio
+async def test_user_deleted_event_marks_projections(
+    registered_event_bus,
+    teams_uow: TeamSQLAlchemyUnitOfWork,
+    tasks_uow: TaskSQLAlchemyUnitOfWork,
+    evaluations_uow: EvaluationSQLAlchemyUnitOfWork,
+):
+    await registered_event_bus.publish(
+        user_event.UserRegistered(user_id=777, username="to_delete")
+    )
+
+    await registered_event_bus.publish(
+        user_event.UserDeleted(user_id=777)
+    )
+
+    team_user = await teams_uow.repos.user.get_by_id(777)
+    task_user = await tasks_uow.repos.user.get_by_id(777)
+    evaluation_user = await evaluations_uow.repos.user.get_by_id(777)
+
+    assert team_user is not None
+    assert task_user is not None
+    assert evaluation_user is not None
+
+    assert team_user.username == "deleted_user"
+    assert task_user.username == "deleted_user"
+    assert evaluation_user.username == "deleted_user"

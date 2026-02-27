@@ -1,5 +1,9 @@
 from app.core.shared.events import teams as team_event
-from app.core.shared.handlers.users import UserCreatedHandler
+from app.core.shared.handlers.users import (
+    UserCreatedHandler,
+    UserDeletedHandler,
+    UserUpdatedHandler,
+)
 from app.core.custom_types import ids, role
 from app.core.infrastructure.event import EventHandler
 from app.tasks.models import Team, TaskUser
@@ -29,6 +33,18 @@ class TeamCreatedHandler(EventHandler[team_event.TeamCreated]):
 
 class TaskUserCreatedHandler(
     UserCreatedHandler[TaskSQLAlchemyUnitOfWork, type[TaskUser]]
+):
+    ...
+
+
+class TaskUserUpdatedHandler(
+    UserUpdatedHandler[TaskSQLAlchemyUnitOfWork, type[TaskUser]]
+):
+    ...
+
+
+class TaskUserDeletedHandler(
+    UserDeletedHandler[TaskSQLAlchemyUnitOfWork, type[TaskUser]]
 ):
     ...
 
