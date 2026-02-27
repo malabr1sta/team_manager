@@ -27,6 +27,10 @@ class Team(Entity):
         self._members = members
 
     @property
+    def id(self) -> ids.TeamId:
+        return self._id
+
+    @property
     def members(self) -> tuple[MemberTeam, ...]:
         """Return team members as an immutable collection."""
         return tuple(self._members)
@@ -41,6 +45,45 @@ class Team(Entity):
     def is_manager(self, user_id: ids.UserId) -> bool:
             """Check whether the user is already a team member."""
             return MemberTeam(user_id, self._id, True) in self.members
+
+    def add_member(
+            self,
+            user_id: ids.UserId,
+            is_manager: bool,
+    ) -> MemberTeam | None:
+        new_member = MemberTeam(
+            user_id=user_id,
+            team_id=self._id,
+            is_manager=is_manager,
+        )
+        if new_member in self._members:
+            return None
+        self._members = [item for item in self._members if item.user_id != user_id]
+        self._members.append(new_member)
+        return new_member
+
+    def remove_member(self, user_id: ids.UserId) -> MemberTeam | None:
+        for member in self._members:
+            if member.user_id == user_id:
+                self._members.remove(member)
+                return member
+        return None
+
+    def change_member_role(
+            self,
+            user_id: ids.UserId,
+            is_manager: bool,
+    ) -> MemberTeam | None:
+        for index, member in enumerate(self._members):
+            if member.user_id == user_id:
+                updated_member = MemberTeam(
+                    user_id=user_id,
+                    team_id=self._id,
+                    is_manager=is_manager,
+                )
+                self._members[index] = updated_member
+                return updated_member
+        return None
 
 
 @dataclass(frozen=True)
@@ -72,6 +115,38 @@ class Meeting(Entity):
         self._participants = participants
         self._start = start
         self._end = end
+
+    @property
+    def id(self) -> ids.MeetingId | None:
+        return self._id
+
+    @property
+    def team_id(self) -> ids.TeamId:
+        return self._team_id
+
+    @property
+    def organizer_id(self) -> ids.UserId:
+        return self._organizer_id
+
+    @property
+    def description(self) -> str:
+        return self._description
+
+    @property
+    def is_cancelled(self) -> bool:
+        return self._is_cancelled
+
+    @property
+    def participants(self) -> tuple[MeetingParticipant | None, ...]:
+        return tuple(self._participants)
+
+    @property
+    def start(self) -> datetime:
+        return self._start
+
+    @property
+    def end(self) -> datetime:
+        return self._end
 
     def check_participant(
             self, user_id: ids.UserId,
@@ -128,7 +203,10 @@ class Meeting(Entity):
             raise custom_exception.MeetingCancelledError(
                 "Meeting already cancelled"
             )
-        if self._start <= datetime.now(timezone.utc):
+        start = self._start
+        if start.tzinfo is None:
+            start = start.replace(tzinfo=timezone.utc)
+        if start <= datetime.now(timezone.utc):
             raise custom_exception.MeetingCancelledError(
                 "Cannot cancel past or ongoing meeting"
             )
