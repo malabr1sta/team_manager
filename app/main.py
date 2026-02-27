@@ -7,6 +7,7 @@ from app.deps import base as base_deps
 from app.core.infrastructure import event_bus
 from app.core.register_handlers import register_event_handlers
 from app.routers import (
+    calendar as calendar_router,
     evaluations as evaluations_router,
     identity as identity_router,
     scheduling as scheduling_router,
@@ -50,3 +51,4 @@ app.include_router(teams_roter.teams_router, prefix=PREFIX)
 app.include_router(tasks_router.tasks_router, prefix=PREFIX)
 app.include_router(evaluations_router.evaluations_router, prefix=PREFIX)
 app.include_router(scheduling_router.scheduling_router, prefix=PREFIX)
+app.include_router(calendar_router.calendar_router, prefix=PREFIX)

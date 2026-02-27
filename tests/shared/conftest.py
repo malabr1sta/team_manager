@@ -21,6 +21,10 @@ from app.evaluations.unit_of_work import (
     EvaluationSQLAlchemyUnitOfWork,
     EvaluationRepositoryProvider,
 )
+from app.calendar.unit_of_work import (
+    CalendarRepositoryProvider,
+    CalendarSQLAlchemyUnitOfWork,
+)
 from app.scheduling.unit_of_work import (
     SchedulingRepositoryProvider,
     SchedulingSQLAlchemyUnitOfWork,
@@ -119,6 +123,23 @@ def evaluations_uow_factory(async_session_factory, event_bus):
 async def evaluations_uow(evaluations_uow_factory):
     """Evaluations UnitOfWork with automatic context."""
     async with evaluations_uow_factory as uow:
+        yield uow
+
+
+@pytest.fixture(scope="function")
+def calendar_uow_factory(async_session_factory, event_bus):
+    """Factory for Calendar UnitOfWork."""
+    return CalendarSQLAlchemyUnitOfWork(
+        session_factory=async_session_factory,
+        bus=event_bus,
+        provider_cls=CalendarRepositoryProvider,
+    )
+
+
+@pytest.fixture
+async def calendar_uow(calendar_uow_factory):
+    """Calendar UnitOfWork with automatic context."""
+    async with calendar_uow_factory as uow:
         yield uow
 
 

@@ -1,11 +1,16 @@
+from datetime import datetime, timedelta, timezone
+
 import pytest
 
 from app.core.custom_types import ids, role
 from app.core.shared.events import identity as user_event
+from app.core.shared.events import meetings as meeting_event
+from app.core.shared.events import tasks as task_event
 from app.teams import (
     management as teams_management,
     models as teams_models
 )
+from app.calendar.unit_of_work import CalendarSQLAlchemyUnitOfWork
 from app.teams.unit_of_work import TeamSQLAlchemyUnitOfWork
 from app.tasks.unit_of_work import (
     TaskSQLAlchemyUnitOfWork,
@@ -236,6 +241,7 @@ async def test_user_updated_event_updates_projections(
     tasks_uow: TaskSQLAlchemyUnitOfWork,
     evaluations_uow: EvaluationSQLAlchemyUnitOfWork,
     scheduling_uow: SchedulingSQLAlchemyUnitOfWork,
+    calendar_uow: CalendarSQLAlchemyUnitOfWork,
 ):
     await registered_event_bus.publish(
         user_event.UserRegistered(user_id=501, username="initial_name")
@@ -249,16 +255,19 @@ async def test_user_updated_event_updates_projections(
     task_user = await tasks_uow.repos.user.get_by_id(501)
     evaluation_user = await evaluations_uow.repos.user.get_by_id(501)
     scheduling_user = await scheduling_uow.repos.user.get_by_id(501)
+    calendar_user = await calendar_uow.repos.user.get_by_id(501)
 
     assert team_user is not None
     assert task_user is not None
     assert evaluation_user is not None
     assert scheduling_user is not None
+    assert calendar_user is not None
 
     assert team_user.username == "updated_name"
     assert task_user.username == "updated_name"
     assert evaluation_user.username == "updated_name"
     assert scheduling_user.username == "updated_name"
+    assert calendar_user.username == "updated_name"
 
 
 @pytest.mark.anyio
@@ -268,6 +277,7 @@ async def test_user_deleted_event_marks_projections(
     tasks_uow: TaskSQLAlchemyUnitOfWork,
     evaluations_uow: EvaluationSQLAlchemyUnitOfWork,
     scheduling_uow: SchedulingSQLAlchemyUnitOfWork,
+    calendar_uow: CalendarSQLAlchemyUnitOfWork,
 ):
     await registered_event_bus.publish(
         user_event.UserRegistered(user_id=777, username="to_delete")
@@ -281,13 +291,114 @@ async def test_user_deleted_event_marks_projections(
     task_user = await tasks_uow.repos.user.get_by_id(777)
     evaluation_user = await evaluations_uow.repos.user.get_by_id(777)
     scheduling_user = await scheduling_uow.repos.user.get_by_id(777)
+    calendar_user = await calendar_uow.repos.user.get_by_id(777)
 
     assert team_user is not None
     assert task_user is not None
     assert evaluation_user is not None
     assert scheduling_user is not None
+    assert calendar_user is not None
 
     assert team_user.username == "deleted_user"
     assert task_user.username == "deleted_user"
     assert evaluation_user.username == "deleted_user"
     assert scheduling_user.username == "deleted_user"
+    assert calendar_user.username == "deleted_user"
+
+
+@pytest.mark.anyio
+async def test_task_events_create_and_update_calendar_entries(
+    registered_event_bus,
+    calendar_uow: CalendarSQLAlchemyUnitOfWork,
+):
+    await registered_event_bus.publish(
+        user_event.UserRegistered(user_id=900, username="owner")
+    )
+    await registered_event_bus.publish(
+        user_event.UserRegistered(user_id=901, username="executor")
+    )
+    deadline = datetime.now(timezone.utc) + timedelta(days=2)
+
+    await registered_event_bus.publish(
+        task_event.TaskCreated(
+            task_id=1,
+            team_id=10,
+            supervisor_id=900,
+            executor_id=901,
+            status="open",
+            title="Task one",
+            description="desc",
+            deadline=deadline,
+            deleted=False,
+        )
+    )
+
+    owner_events = await calendar_uow.repos.event.get_by_user(900)
+    executor_events = await calendar_uow.repos.event.get_by_user(901)
+    assert len(owner_events) == 1
+    assert len(executor_events) == 1
+    assert owner_events[0].title == "Task one"
+
+    await registered_event_bus.publish(
+        task_event.TaskUpdated(
+            task_id=1,
+            team_id=10,
+            supervisor_id=900,
+            executor_id=901,
+            previous_executor_id=901,
+            status="done",
+            title="Task one updated",
+            description="desc2",
+            deadline=deadline,
+            deleted=True,
+        )
+    )
+
+    owner_events = await calendar_uow.repos.event.get_by_user(900)
+    assert len(owner_events) == 1
+    assert owner_events[0].cancelled is True
+
+
+@pytest.mark.anyio
+async def test_meeting_events_sync_calendar_entries(
+    registered_event_bus,
+    calendar_uow: CalendarSQLAlchemyUnitOfWork,
+):
+    await registered_event_bus.publish(
+        user_event.UserRegistered(user_id=1000, username="manager")
+    )
+    await registered_event_bus.publish(
+        user_event.UserRegistered(user_id=1001, username="member")
+    )
+    start = datetime.now(timezone.utc) + timedelta(days=1)
+    end = start + timedelta(hours=1)
+
+    await registered_event_bus.publish(
+        meeting_event.MeetingCreated(
+            meeting_id=5,
+            team_id=1,
+            organizer_id=1000,
+            participant_ids=[1000, 1001],
+            start=start,
+            end=end,
+            description="sync",
+            is_cancelled=False,
+        )
+    )
+    manager_events = await calendar_uow.repos.event.get_by_user(1000)
+    member_events = await calendar_uow.repos.event.get_by_user(1001)
+    assert len(manager_events) == 1
+    assert len(member_events) == 1
+
+    await registered_event_bus.publish(
+        meeting_event.MeetingCancelled(
+            meeting_id=5,
+            team_id=1,
+            organizer_id=1000,
+            participant_ids=[1000, 1001],
+        )
+    )
+    manager_events = await calendar_uow.repos.event.get_by_user(1000)
+    member_events = await calendar_uow.repos.event.get_by_user(1001)
+    assert manager_events[0].cancelled is True
+    assert member_events[0].cancelled is True

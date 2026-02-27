@@ -170,6 +170,7 @@ class SQLAlchemySchedulingMeetingRepository(AbstractRepository[models.Meeting]):
             self.session.add(meeting_orm)
             await self.session.flush()
             domain._id = ids.MeetingId(meeting_orm.id)
+            domain.mark_created_event()
         else:
             mappers.SchedulingMeetingMapper.update_orm(meeting_orm, domain)
 
@@ -190,3 +191,4 @@ class SQLAlchemySchedulingMeetingRepository(AbstractRepository[models.Meeting]):
             self.session.add(
                 mappers.SchedulingMeetingParticipantMapper.to_orm(meeting_participant)
             )
+        self.uow._seen.add(domain)

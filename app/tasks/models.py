@@ -256,6 +256,7 @@ class Task(Entity, AggregateRoot):
             self, user_id: ids.UserId,
             team: Team
     ):
+        previous_executor_id = self._executor_id
         self.check_member(user_id, role.UserTaskRole.MEMBER, team)
         self._executor_id = user_id
         self.record_event(
@@ -265,6 +266,13 @@ class Task(Entity, AggregateRoot):
                 supervisor_id=int(self._supervisor_id),
                 executor_id=int(self._executor_id),
                 status=self._status.value,
+                previous_executor_id=(
+                    int(previous_executor_id) if previous_executor_id else None
+                ),
+                title=self._title,
+                description=self._description,
+                deadline=self._deadline,
+                deleted=self._deleted,
             )
         )
 
@@ -290,6 +298,11 @@ class Task(Entity, AggregateRoot):
                 supervisor_id=int(self._supervisor_id),
                 executor_id=int(self._executor_id) if self._executor_id else None,
                 status=self._status.value,
+                previous_executor_id=int(self._executor_id) if self._executor_id else None,
+                title=self._title,
+                description=self._description,
+                deadline=self._deadline,
+                deleted=self._deleted,
             )
         )
 
@@ -303,5 +316,9 @@ class Task(Entity, AggregateRoot):
                 supervisor_id=int(self._supervisor_id),
                 executor_id=int(self._executor_id) if self._executor_id else None,
                 status=self._status.value,
+                title=self._title,
+                description=self._description,
+                deadline=self._deadline,
+                deleted=self._deleted,
             )
         )
