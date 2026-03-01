@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Teams</title>
+  <link rel="stylesheet" href="/ui/styles.css" />
+</head>
+<body>
+  <h1>Teams</h1>
+  <nav>
+    <a href="/ui/index.html">Home</a>
+    <a href="/ui/identity.html">Identity</a>
+    <a href="/ui/tasks.html">Tasks</a>
+    <a href="/ui/evaluations.html">Evaluations</a>
+    <a href="/ui/scheduling.html">Scheduling</a>
+    <a href="/ui/calendar.html">Calendar</a>
+  </nav>
+
+  <section id="cap_root">
+    <h2>Team Context</h2>
+    <label>team_id <input id="team_id" type="number" /></label>
+    <button id="caps_btn">Load capabilities</button>
+    <pre id="caps_out"></pre>
+  </section>
+
+  <section>
+    <h2>Create Team</h2>
+    <label>team_name <input id="team_name" type="text" /></label>
+    <button id="create_team_btn">POST /teams</button>
+  </section>
+
+  <section>
+    <h2>Read/List Teams</h2>
+    <button id="list_btn">GET /teams</button>
+    <button id="get_btn" data-cap="view_team">GET /teams/{id}</button>
+  </section>
+
+  <section>
+    <h2>Add Member</h2>
+    <label>target_user_id <input id="add_user_id" type="number" /></label>
+    <label>role
+      <select id="add_role">
+        <option value="member" selected>member</option>
+        <option value="manager">manager</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+    <button id="add_btn" data-cap="add_member">POST /teams/{id}/members</button>
+  </section>
+
+  <section>
+    <h2>Remove Member</h2>
+    <label>member_id <input id="remove_member_id" type="number" /></label>
+    <label>role
+      <select id="remove_role">
+        <option value="member" selected>member</option>
+        <option value="manager">manager</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+    <button id="remove_btn" data-cap="remove_member">DELETE member</button>
+  </section>
+
+  <section>
+    <h2>Change Member Role</h2>
+    <label>member_id <input id="change_member_id" type="number" /></label>
+    <label>old_role
+      <select id="old_role">
+        <option value="member" selected>member</option>
+        <option value="manager">manager</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+    <label>new_role
+      <select id="new_role">
+        <option value="member">member</option>
+        <option value="manager" selected>manager</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+    <button id="change_btn" data-cap="change_member_role">PATCH member role</button>
+  </section>
+
+  <section>
+    <h2>Output</h2>
+    <pre id="out"></pre>
+  </section>
+
+  <script src="/ui/common.js"></script>
+  <script>
+    const out = "out";
+    let caps = {};
+    const teamId = () => Number(document.getElementById("team_id").value);
+
+    async function loadCaps() {
+      const id = teamId();
+      caps = await App.fetchCapabilities(id);
+      App.writeOutput("caps_out", caps);
+      App.applyCapabilities("cap_root", caps);
+      App.applyCapabilities(document.body.id || "cap_root", caps);
+      document.querySelectorAll("[data-cap]").forEach((el) => {
+        const key = el.getAttribute("data-cap");
+        const allowed = Boolean(caps[key]);
+        el.disabled = !allowed;
+      });
+    }
+
+    document.getElementById("caps_btn").onclick = async () => {
+      try {
+        await loadCaps();
+      } catch (err) {
+        App.writeOutput("caps_out", String(err));
+      }
+    };
+
+    document.getElementById("create_team_btn").onclick = async () => {
+      try {
+        App.writeOutput(
+          out,
+          await App.apiRequest(`${App.API_PREFIX}/teams`, {
+            method: "POST",
+            body: { team_name: document.getElementById("team_name").value },
+          }),
+        );
+      } catch (err) {
+        App.writeOutput(out, String(err));
+      }
+    };
+
+    document.getElementById("list_btn").onclick = async () => {
+      try {
+        App.writeOutput(out, await App.apiRequest(`${App.API_PREFIX}/teams`));
+      } catch (err) {
+        App.writeOutput(out, String(err));
+      }
+    };
+
+    document.getElementById("get_btn").onclick = async () => {
+      try {
+        App.writeOutput(out, await App.apiRequest(`${App.API_PREFIX}/teams/${teamId()}`));
+      } catch (err) {
+        App.writeOutput(out, String(err));
+      }
+    };
+
+    document.getElementById("add_btn").onclick = async () => {
+      try {
+        App.writeOutput(
+          out,
+          await App.apiRequest(`${App.API_PREFIX}/teams/${teamId()}/members`, {
+            method: "POST",
+            body: {
+              target_user_id: Number(document.getElementById("add_user_id").value),
+              role: document.getElementById("add_role").value,
+            },
+          }),
+        );
+      } catch (err) {
+        App.writeOutput(out, String(err));
+      }
+    };
+
+    document.getElementById("remove_btn").onclick = async () => {
+      try {
+        const memberId = Number(document.getElementById("remove_member_id").value);
+        const role = document.getElementById("remove_role").value;
+        App.writeOutput(
+          out,
+          await App.apiRequest(
+            `${App.API_PREFIX}/teams/${teamId()}/members/${memberId}?role=${encodeURIComponent(role)}`,
+            { method: "DELETE" },
+          ),
+        );
+      } catch (err) {
+        App.writeOutput(out, String(err));
+      }
+    };
+
+    document.getElementById("change_btn").onclick = async () => {
+      try {
+        const memberId = Number(document.getElementById("change_member_id").value);
+        App.writeOutput(
+          out,
+          await App.apiRequest(
+            `${App.API_PREFIX}/teams/${teamId()}/members/${memberId}/role`,
+            {
+              method: "PATCH",
+              body: {
+                old_role: document.getElementById("old_role").value,
+                new_role: document.getElementById("new_role").value,
+              },
+            },
+          ),
+        );
+      } catch (err) {
+        App.writeOutput(out, String(err));
+      }
+    };
+  </script>
+</body>
+</html>

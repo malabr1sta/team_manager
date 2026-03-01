@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Calendar</title>
+  <link rel="stylesheet" href="/ui/styles.css" />
+</head>
+<body>
+  <h1>Calendar</h1>
+  <nav>
+    <a href="/ui/index.html">Home</a>
+    <a href="/ui/teams.html">Teams</a>
+  </nav>
+
+  <section>
+    <h2>Capabilities (optional)</h2>
+    <label>team_id <input id="team_id" type="number" /></label>
+    <button id="caps_btn">Load capabilities</button>
+    <pre id="caps_out"></pre>
+  </section>
+
+  <section>
+    <h2>Day View</h2>
+    <label>day <input id="day" type="date" value="2026-03-10" /></label>
+    <button id="day_btn">GET /calendar/day</button>
+  </section>
+
+  <section>
+    <h2>Month View</h2>
+    <label>year <input id="year" type="number" value="2026" /></label>
+    <label>month <input id="month" type="number" value="3" /></label>
+    <button id="month_btn">GET /calendar/month</button>
+  </section>
+
+  <section><h2>Output</h2><pre id="out"></pre></section>
+
+  <script src="/ui/common.js"></script>
+  <script>
+    const out = "out";
+    document.getElementById("caps_btn").onclick = async () => {
+      try {
+        const teamId = Number(document.getElementById("team_id").value);
+        App.writeOutput("caps_out", await App.fetchCapabilities(teamId));
+      } catch (err) {
+        App.writeOutput("caps_out", String(err));
+      }
+    };
+    document.getElementById("day_btn").onclick = async () => {
+      try {
+        const day = document.getElementById("day").value;
+        App.writeOutput(out, await App.apiRequest(`${App.API_PREFIX}/calendar/day?day=${encodeURIComponent(day)}`));
+      } catch (err) { App.writeOutput(out, String(err)); }
+    };
+    document.getElementById("month_btn").onclick = async () => {
+      try {
+        const year = Number(document.getElementById("year").value);
+        const month = Number(document.getElementById("month").value);
+        App.writeOutput(out, await App.apiRequest(`${App.API_PREFIX}/calendar/month?year=${year}&month=${month}`));
+      } catch (err) { App.writeOutput(out, String(err)); }
+    };
+  </script>
+</body>
+</html>

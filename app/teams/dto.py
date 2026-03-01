@@ -87,3 +87,29 @@ class TeamListDTO(BaseModel):
     model_config = ConfigDict(frozen=True)
     items: list[TeamReadDTO]
     total: int
+
+
+class TeamCapabilitiesDTO(BaseModel):
+    """Capabilities for the current user in selected team."""
+
+    model_config = ConfigDict(frozen=True)
+
+    team_id: int
+    user_id: int
+    available_roles: list[str] = Field(default_factory=list)
+    is_member: bool
+    is_admin: bool
+    is_manager: bool
+    view_team: bool
+    add_member: bool
+    remove_member: bool
+    change_member_role: bool
+    create_task: bool
+    assign_executor: bool
+    update_task: bool
+    add_comment: bool
+    create_meeting: bool
+    manage_meeting_participants: bool
+    cancel_meeting: bool
+    evaluate_task: bool
+    view_calendar: bool

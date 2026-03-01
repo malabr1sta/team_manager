@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Identity</title>
+  <link rel="stylesheet" href="/ui/styles.css" />
+</head>
+<body>
+  <h1>Identity</h1>
+  <nav>
+    <a href="/ui/index.html">Home</a>
+    <a href="/ui/teams.html">Teams</a>
+    <a href="/ui/tasks.html">Tasks</a>
+    <a href="/ui/evaluations.html">Evaluations</a>
+    <a href="/ui/scheduling.html">Scheduling</a>
+    <a href="/ui/calendar.html">Calendar</a>
+  </nav>
+
+  <section>
+    <h2>Get Me</h2>
+    <button id="me_btn">GET /users/me</button>
+  </section>
+
+  <section>
+    <h2>Update Me</h2>
+    <p class="muted">JSON body for PATCH /users/me</p>
+    <textarea id="patch_body">{ "username": "new_name" }</textarea><br />
+    <button id="patch_btn">PATCH /users/me</button>
+  </section>
+
+  <section>
+    <h2>Delete Me</h2>
+    <button id="delete_btn">DELETE /users/me</button>
+  </section>
+
+  <section>
+    <h2>Output</h2>
+    <pre id="out"></pre>
+  </section>
+
+  <script src="/ui/common.js"></script>
+  <script>
+    const out = "out";
+    document.getElementById("me_btn").onclick = async () => {
+      try {
+        App.writeOutput(out, await App.apiRequest(`${App.API_PREFIX}/users/me`));
+      } catch (err) {
+        App.writeOutput(out, String(err));
+      }
+    };
+    document.getElementById("patch_btn").onclick = async () => {
+      try {
+        App.writeOutput(
+          out,
+          await App.apiRequest(`${App.API_PREFIX}/users/me`, {
+            method: "PATCH",
+            body: App.readJsonInput("patch_body"),
+          }),
+        );
+      } catch (err) {
+        App.writeOutput(out, String(err));
+      }
+    };
+    document.getElementById("delete_btn").onclick = async () => {
+      try {
+        App.writeOutput(
+          out,
+          await App.apiRequest(`${App.API_PREFIX}/users/me`, { method: "DELETE" }),
+        );
+      } catch (err) {
+        App.writeOutput(out, String(err));
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Evaluations</title>
+  <link rel="stylesheet" href="/ui/styles.css" />
+</head>
+<body>
+  <h1>Evaluations</h1>
+  <nav>
+    <a href="/ui/index.html">Home</a>
+    <a href="/ui/teams.html">Teams</a>
+  </nav>
+
+  <section>
+    <h2>Capabilities</h2>
+    <label>team_id <input id="team_id" type="number" /></label>
+    <button id="caps_btn">Load capabilities</button>
+    <pre id="caps_out"></pre>
+  </section>
+
+  <section>
+    <h2>Create Evaluation</h2>
+    <label>task_id <input id="task_id" type="number" /></label>
+    <label>grade
+      <select id="grade">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5" selected>5</option>
+      </select>
+    </label>
+    <button id="create_btn" data-cap="evaluate_task">POST /evaluations/tasks/{task_id}</button>
+  </section>
+
+  <section>
+    <h2>My Evaluations</h2>
+    <button id="list_btn">GET /evaluations/me</button>
+    <button id="avg_btn">GET /evaluations/me/average</button>
+  </section>
+
+  <section><h2>Output</h2><pre id="out"></pre></section>
+
+  <script src="/ui/common.js"></script>
+  <script>
+    const out = "out";
+    const teamId = () => Number(document.getElementById("team_id").value);
+    const taskId = () => Number(document.getElementById("task_id").value);
+
+    document.getElementById("caps_btn").onclick = async () => {
+      try {
+        const caps = await App.fetchCapabilities(teamId());
+        App.writeOutput("caps_out", caps);
+        document.querySelectorAll("[data-cap]").forEach((el) => {
+          const key = el.getAttribute("data-cap");
+          el.disabled = !Boolean(caps[key]);
+        });
+      } catch (err) {
+        App.writeOutput("caps_out", String(err));
+      }
+    };
+
+    document.getElementById("create_btn").onclick = async () => {
+      try {
+        App.writeOutput(out, await App.apiRequest(
+          `${App.API_PREFIX}/evaluations/tasks/${taskId()}`,
+          { method: "POST", body: { grade: Number(document.getElementById("grade").value) } },
+        ));
+      } catch (err) { App.writeOutput(out, String(err)); }
+    };
+
+    document.getElementById("list_btn").onclick = async () => {
+      try {
+        App.writeOutput(out, await App.apiRequest(`${App.API_PREFIX}/evaluations/me?team_id=${teamId()}`));
+      } catch (err) { App.writeOutput(out, String(err)); }
+    };
+
+    document.getElementById("avg_btn").onclick = async () => {
+      try {
+        App.writeOutput(out, await App.apiRequest(`${App.API_PREFIX}/evaluations/me/average?team_id=${teamId()}`));
+      } catch (err) { App.writeOutput(out, String(err)); }
+    };
+  </script>
+</body>
+</html>

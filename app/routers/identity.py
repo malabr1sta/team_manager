@@ -47,7 +47,7 @@ users_router = APIRouter(
 )
 
 
-@users_router.get("/me")
+@users_router.get("/me", response_model=schemas.UserRead)
 async def get_me(user: UserDepend):
     return user
 

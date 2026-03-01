@@ -213,6 +213,20 @@ class ListMyTeamsUseCase:
         return dto.TeamListDTO(items=team_items, total=len(team_items))
 
 
+class TeamCapabilitiesUseCase:
+    def __init__(self, uow: TeamSQLAlchemyUnitOfWork):
+        self.uow = uow
+
+    async def execute(self, team_id: int, user_id: int) -> dto.TeamCapabilitiesDTO:
+        user = await self.uow.repos.user.get_by_id(user_id)
+        if user is None:
+            raise custom_exception.UserNotFoundException(f"User {user_id} not found")
+        team = await self.uow.repos.team.get_by_id(team_id)
+        if team is None:
+            raise HTTPException(404, "Team not found")
+        return _to_team_capabilities(team, user_id)
+
+
 def _to_team_read_dto(team, user_id: int) -> dto.TeamReadDTO:
     return dto.TeamReadDTO(
         id=team.id or 0,
@@ -226,6 +240,46 @@ def _to_team_read_dto(team, user_id: int) -> dto.TeamReadDTO:
         updated_at=getattr(team, "updated_at", None),
         is_admin=team.is_admin(ids.UserId(user_id)),
         is_member=team.is_member(ids.UserId(user_id)),
+    )
+
+
+def _to_team_capabilities(team, user_id: int) -> dto.TeamCapabilitiesDTO:
+    user_domain_id = ids.UserId(user_id)
+    member_roles = sorted(
+        {
+            str(member.role)
+            for member in team.members
+            if int(member.user_id) == user_id
+        }
+    )
+    is_member = team.is_member(user_domain_id)
+    is_admin = team.is_admin(user_domain_id)
+    is_manager = any(
+        int(member.user_id) == user_id and member.role == role.UserRole.MANAGER
+        for member in team.members
+    )
+    can_manage_team = is_admin
+    can_manage_work = is_admin or is_manager
+    return dto.TeamCapabilitiesDTO(
+        team_id=int(team.id or 0),
+        user_id=user_id,
+        available_roles=member_roles,
+        is_member=is_member,
+        is_admin=is_admin,
+        is_manager=is_manager,
+        view_team=is_member,
+        add_member=can_manage_team,
+        remove_member=can_manage_team,
+        change_member_role=can_manage_team,
+        create_task=can_manage_work,
+        assign_executor=can_manage_work,
+        update_task=can_manage_work,
+        add_comment=is_member,
+        create_meeting=can_manage_work,
+        manage_meeting_participants=can_manage_work,
+        cancel_meeting=can_manage_work,
+        evaluate_task=can_manage_work,
+        view_calendar=is_member,
     )
 
 

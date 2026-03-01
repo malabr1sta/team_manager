@@ -86,3 +86,33 @@ Create superuser for admin login:
 
 - `uv run python -m app.scripts.create_superuser --email admin@example.com --password StrongPass123! --username admin`
 - `docker compose exec backend uv run python -m app.scripts.create_superuser --email admin@example.com --password StrongPass123! --username admin`
+
+## Minimal frontend (MVP)
+
+Frontend entry point:
+
+- `http://localhost:8000/ui/index.html`
+
+Pages by context:
+
+- `/ui/identity.html`
+- `/ui/teams.html`
+- `/ui/tasks.html`
+- `/ui/evaluations.html`
+- `/ui/scheduling.html`
+- `/ui/calendar.html`
+
+How to use:
+
+- Register and login on `/ui/index.html` (JWT is stored in browser `localStorage`).
+- Open a context page and call actions from forms/buttons.
+- For team-scoped pages, enter `team_id` and load capabilities from:
+  - `GET /api/v1/teams/{team_id}/capabilities/me`
+
+Smoke scenario:
+
+1. Login as user with team access.
+2. Open `/ui/teams.html`, set `team_id`, click `Load capabilities`.
+3. Verify buttons are disabled for actions with `false` capabilities.
+4. Run allowed action (expect success) and forbidden action (expect readable `403`).
+5. Check `/ui/tasks.html`, `/ui/scheduling.html`, `/ui/evaluations.html` with same team and confirm gating behavior.

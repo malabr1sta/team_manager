@@ -55,6 +55,12 @@ async def test_full_flow(client):
     user_data = get_response.json()
     assert user_data["email"] == "flow@example.com"
     assert user_data["username"] == "flowuser"
+    assert "hashed_password" not in user_data
+    assert "id" in user_data
+    assert "is_active" in user_data
+    assert "is_superuser" in user_data
+    assert "is_verified" in user_data
+    assert "deleted" in user_data
 
     # 4. Create team
     create_team_response = await client.post(

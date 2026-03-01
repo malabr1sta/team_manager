@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Team Manager MVP UI</title>
+  <link rel="stylesheet" href="/ui/styles.css" />
+</head>
+<body>
+  <h1>Team Manager MVP UI</h1>
+  <p class="muted">Simple frontend for manual API checks.</p>
+
+  <nav>
+    <a href="/ui/index.html">Home</a>
+    <a href="/ui/identity.html">Identity</a>
+    <a href="/ui/teams.html">Teams</a>
+    <a href="/ui/tasks.html">Tasks</a>
+    <a href="/ui/evaluations.html">Evaluations</a>
+    <a href="/ui/scheduling.html">Scheduling</a>
+    <a href="/ui/calendar.html">Calendar</a>
+    <a href="/admin">Admin</a>
+  </nav>
+
+  <div class="row">
+    <section class="col">
+      <h2>Register</h2>
+      <label>Email <input id="reg_email" type="email" /></label><br />
+      <label>Password <input id="reg_password" type="password" /></label><br />
+      <label>Username <input id="reg_username" type="text" /></label><br />
+      <button id="register_btn">Register</button>
+    </section>
+
+    <section class="col">
+      <h2>Login</h2>
+      <label>Email <input id="login_email" type="email" /></label><br />
+      <label>Password <input id="login_password" type="password" /></label><br />
+      <button id="login_btn">Login</button>
+      <button id="logout_btn">Logout</button>
+    </section>
+  </div>
+
+  <section>
+    <h2>Current User</h2>
+    <button id="me_btn">Load /users/me</button>
+    <pre id="me_out"></pre>
+  </section>
+
+  <section>
+    <h2>My Roles By Team</h2>
+    <button id="roles_btn">Load teams and roles</button>
+    <pre id="roles_out"></pre>
+  </section>
+
+  <section>
+    <h2>Output</h2>
+    <pre id="main_out"></pre>
+  </section>
+
+  <script src="/ui/common.js"></script>
+  <script>
+    const out = "main_out";
+
+    document.getElementById("register_btn").onclick = async () => {
+      try {
+        const data = await App.register(
+          document.getElementById("reg_email").value,
+          document.getElementById("reg_password").value,
+          document.getElementById("reg_username").value,
+        );
+        App.writeOutput(out, data);
+      } catch (err) {
+        App.writeOutput(out, String(err));
+      }
+    };
+
+    document.getElementById("login_btn").onclick = async () => {
+      try {
+        const data = await App.login(
+          document.getElementById("login_email").value,
+          document.getElementById("login_password").value,
+        );
+        App.writeOutput(out, data);
+      } catch (err) {
+        App.writeOutput(out, String(err));
+      }
+    };
+
+    document.getElementById("logout_btn").onclick = () => {
+      App.clearToken();
+      App.writeOutput(out, "Logged out");
+    };
+
+    document.getElementById("me_btn").onclick = async () => {
+      try {
+        const data = await App.fetchMe();
+        App.writeOutput("me_out", data);
+      } catch (err) {
+        App.writeOutput("me_out", String(err));
+      }
+    };
+
+    document.getElementById("roles_btn").onclick = async () => {
+      try {
+        const me = await App.fetchMe();
+        const teams = await App.fetchMyTeams();
+        const result = [];
+        for (const item of teams.items || []) {
+          const team = await App.fetchTeam(item.id);
+          const roles = (team.members || [])
+            .filter((member) => Number(member.user_id) === Number(me.id))
+            .map((member) => member.role);
+          result.push({
+            team_id: item.id,
+            team_name: item.name,
+            roles,
+          });
+        }
+        App.writeOutput("roles_out", result);
+      } catch (err) {
+        App.writeOutput("roles_out", String(err));
+      }
+    };
+  </script>
+</body>
+</html>

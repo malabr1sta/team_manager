@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Scheduling</title>
+  <link rel="stylesheet" href="/ui/styles.css" />
+</head>
+<body>
+  <h1>Scheduling</h1>
+  <nav>
+    <a href="/ui/index.html">Home</a>
+    <a href="/ui/teams.html">Teams</a>
+  </nav>
+
+  <section>
+    <h2>Capabilities</h2>
+    <label>team_id <input id="team_id" type="number" /></label>
+    <button id="caps_btn">Load capabilities</button>
+    <pre id="caps_out"></pre>
+  </section>
+
+  <section>
+    <h2>Create Meeting</h2>
+    <label>start <input id="create_start" type="datetime-local" /></label>
+    <label>end <input id="create_end" type="datetime-local" /></label>
+    <label>description</label><br />
+    <textarea id="create_description">Sprint sync</textarea><br />
+    <button id="create_btn" data-cap="create_meeting">POST /scheduling/meetings</button>
+  </section>
+
+  <section>
+    <h2>Read/List Meetings</h2>
+    <label>meeting_id <input id="meeting_id" type="number" /></label>
+    <button id="get_btn">GET /scheduling/meetings/{id}</button>
+    <button id="list_btn">GET /scheduling/meetings</button>
+  </section>
+
+  <section>
+    <h2>Manage Participants</h2>
+    <label>participant_user_id <input id="participant_user_id" type="number" /></label>
+    <button id="add_part_btn" data-cap="manage_meeting_participants">POST participant</button>
+    <button id="remove_part_btn" data-cap="manage_meeting_participants">DELETE participant</button>
+  </section>
+
+  <section>
+    <h2>Cancel Meeting</h2>
+    <button id="cancel_btn" data-cap="cancel_meeting">POST /cancel</button>
+  </section>
+
+  <section><h2>Output</h2><pre id="out"></pre></section>
+
+  <script src="/ui/common.js"></script>
+  <script>
+    const out = "out";
+    const teamId = () => Number(document.getElementById("team_id").value);
+    const meetingId = () => Number(document.getElementById("meeting_id").value);
+    const participantId = () => Number(document.getElementById("participant_user_id").value);
+    const toIso = (localValue) => new Date(localValue).toISOString();
+
+    document.getElementById("caps_btn").onclick = async () => {
+      try {
+        const caps = await App.fetchCapabilities(teamId());
+        App.writeOutput("caps_out", caps);
+        document.querySelectorAll("[data-cap]").forEach((el) => {
+          const key = el.getAttribute("data-cap");
+          el.disabled = !Boolean(caps[key]);
+        });
+      } catch (err) {
+        App.writeOutput("caps_out", String(err));
+      }
+    };
+
+    document.getElementById("create_btn").onclick = async () => {
+      try {
+        const startRaw = document.getElementById("create_start").value;
+        const endRaw = document.getElementById("create_end").value;
+        App.writeOutput(out, await App.apiRequest(`${App.API_PREFIX}/scheduling/meetings`, {
+          method: "POST",
+          body: {
+            team_id: teamId(),
+            start: startRaw ? toIso(startRaw) : null,
+            end: endRaw ? toIso(endRaw) : null,
+            description: document.getElementById("create_description").value,
+          },
+        }));
+      } catch (err) { App.writeOutput(out, String(err)); }
+    };
+    document.getElementById("get_btn").onclick = async () => {
+      try {
+        App.writeOutput(out, await App.apiRequest(`${App.API_PREFIX}/scheduling/meetings/${meetingId()}`));
+      } catch (err) { App.writeOutput(out, String(err)); }
+    };
+    document.getElementById("list_btn").onclick = async () => {
+      try {
+        App.writeOutput(out, await App.apiRequest(`${App.API_PREFIX}/scheduling/meetings?team_id=${teamId()}`));
+      } catch (err) { App.writeOutput(out, String(err)); }
+    };
+    document.getElementById("add_part_btn").onclick = async () => {
+      try {
+        App.writeOutput(out, await App.apiRequest(
+          `${App.API_PREFIX}/scheduling/meetings/${meetingId()}/participants/${participantId()}`,
+          { method: "POST" },
+        ));
+      } catch (err) { App.writeOutput(out, String(err)); }
+    };
+    document.getElementById("remove_part_btn").onclick = async () => {
+      try {
+        App.writeOutput(out, await App.apiRequest(
+          `${App.API_PREFIX}/scheduling/meetings/${meetingId()}/participants/${participantId()}`,
+          { method: "DELETE" },
+        ));
+      } catch (err) { App.writeOutput(out, String(err)); }
+    };
+    document.getElementById("cancel_btn").onclick = async () => {
+      try {
+        App.writeOutput(out, await App.apiRequest(
+          `${App.API_PREFIX}/scheduling/meetings/${meetingId()}/cancel`,
+          { method: "POST" },
+        ));
+      } catch (err) { App.writeOutput(out, String(err)); }
+    };
+  </script>
+</body>
+</html>

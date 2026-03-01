@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Tasks</title>
+  <link rel="stylesheet" href="/ui/styles.css" />
+</head>
+<body>
+  <h1>Tasks</h1>
+  <nav>
+    <a href="/ui/index.html">Home</a>
+    <a href="/ui/teams.html">Teams</a>
+  </nav>
+
+  <section>
+    <h2>Capabilities</h2>
+    <label>team_id <input id="team_id" type="number" /></label>
+    <button id="caps_btn">Load capabilities</button>
+    <pre id="caps_out"></pre>
+  </section>
+
+  <section>
+    <h2>Create Task</h2>
+    <label>title <input id="create_title" type="text" value="Task title" /></label>
+    <label>description</label><br />
+    <textarea id="create_description">Task details</textarea><br />
+    <label>deadline <input id="create_deadline" type="datetime-local" /></label>
+    <button id="create_btn" data-cap="create_task">POST /tasks</button>
+  </section>
+
+  <section>
+    <h2>Read/List</h2>
+    <label>task_id <input id="task_id" type="number" /></label>
+    <button id="get_btn">GET /tasks/{task_id}</button>
+    <button id="list_btn">GET /tasks</button>
+  </section>
+
+  <section>
+    <h2>Update Task</h2>
+    <label>title <input id="upd_title" type="text" value="Updated title" /></label>
+    <label>description</label><br />
+    <textarea id="upd_description"></textarea><br />
+    <label>status
+      <select id="upd_status">
+        <option value="" selected>-- keep unchanged --</option>
+        <option value="OPEN">OPEN</option>
+        <option value="IN_PROGRESS">IN_PROGRESS</option>
+        <option value="DONE">DONE</option>
+      </select>
+    </label>
+    <label>mark as deleted <input id="upd_deleted" type="checkbox" /></label>
+    <button id="update_btn" data-cap="update_task">PATCH /tasks/{task_id}</button>
+  </section>
+
+  <section>
+    <h2>Assign Executor</h2>
+    <label>executor_id <input id="executor_id" type="number" /></label>
+    <button id="assign_btn" data-cap="assign_executor">POST /tasks/{task_id}/executor/{executor_id}</button>
+  </section>
+
+  <section>
+    <h2>Comments</h2>
+    <label>text</label><br />
+    <textarea id="comment_text">Hello from UI</textarea><br />
+    <button id="comment_add_btn" data-cap="add_comment">POST /tasks/{task_id}/comments</button>
+    <button id="comment_list_btn">GET /tasks/{task_id}/comments</button>
+  </section>
+
+  <section><h2>Output</h2><pre id="out"></pre></section>
+
+  <script src="/ui/common.js"></script>
+  <script>
+    const out = "out";
+    const teamId = () => Number(document.getElementById("team_id").value);
+    const taskId = () => Number(document.getElementById("task_id").value);
+    const toIso = (localValue) => new Date(localValue).toISOString();
+
+    async function loadCaps() {
+      const caps = await App.fetchCapabilities(teamId());
+      App.writeOutput("caps_out", caps);
+      document.querySelectorAll("[data-cap]").forEach((el) => {
+        const key = el.getAttribute("data-cap");
+        el.disabled = !Boolean(caps[key]);
+      });
+    }
+
+    document.getElementById("caps_btn").onclick = async () => {
+      try {
+        await loadCaps();
+      } catch (err) {
+        App.writeOutput("caps_out", String(err));
+      }
+    };
+
+    document.getElementById("create_btn").onclick = async () => {
+      try {
+        const deadlineRaw = document.getElementById("create_deadline").value;
+        App.writeOutput(out, await App.apiRequest(`${App.API_PREFIX}/tasks`, {
+          method: "POST",
+          body: {
+            team_id: teamId(),
+            title: document.getElementById("create_title").value,
+            description: document.getElementById("create_description").value,
+            deadline: deadlineRaw ? toIso(deadlineRaw) : null,
+          },
+        }));
+      } catch (err) { App.writeOutput(out, String(err)); }
+    };
+    document.getElementById("get_btn").onclick = async () => {
+      try {
+        App.writeOutput(out, await App.apiRequest(`${App.API_PREFIX}/tasks/${taskId()}`));
+      } catch (err) { App.writeOutput(out, String(err)); }
+    };
+    document.getElementById("list_btn").onclick = async () => {
+      try {
+        App.writeOutput(out, await App.apiRequest(`${App.API_PREFIX}/tasks?team_id=${teamId()}`));
+      } catch (err) { App.writeOutput(out, String(err)); }
+    };
+    document.getElementById("update_btn").onclick = async () => {
+      try {
+        const payload = {};
+        const title = document.getElementById("upd_title").value.trim();
+        const description = document.getElementById("upd_description").value.trim();
+        const status = document.getElementById("upd_status").value;
+        const deletedChecked = document.getElementById("upd_deleted").checked;
+
+        if (title) {
+          payload.title = title;
+        }
+        if (description) {
+          payload.description = description;
+        }
+        if (status) {
+          payload.status = status;
+        }
+        if (deletedChecked) {
+          payload.deleted = true;
+        }
+
+        App.writeOutput(out, await App.apiRequest(`${App.API_PREFIX}/tasks/${taskId()}`, {
+          method: "PATCH",
+          body: payload,
+        }));
+      } catch (err) { App.writeOutput(out, String(err)); }
+    };
+    document.getElementById("assign_btn").onclick = async () => {
+      try {
+        const executorId = Number(document.getElementById("executor_id").value);
+        App.writeOutput(out, await App.apiRequest(
+          `${App.API_PREFIX}/tasks/${taskId()}/executor/${executorId}`,
+          { method: "POST" },
+        ));
+      } catch (err) { App.writeOutput(out, String(err)); }
+    };
+    document.getElementById("comment_add_btn").onclick = async () => {
+      try {
+        App.writeOutput(out, await App.apiRequest(
+          `${App.API_PREFIX}/tasks/${taskId()}/comments`,
+          { method: "POST", body: { text: document.getElementById("comment_text").value } },
+        ));
+      } catch (err) { App.writeOutput(out, String(err)); }
+    };
+    document.getElementById("comment_list_btn").onclick = async () => {
+      try {
+        App.writeOutput(out, await App.apiRequest(`${App.API_PREFIX}/tasks/${taskId()}/comments`));
+      } catch (err) { App.writeOutput(out, String(err)); }
+    };
+  </script>
+</body>
+</html>

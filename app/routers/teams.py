@@ -108,3 +108,18 @@ async def change_member_role(
     except Exception as exc:
         raise use_cases.map_team_exception(exc)
 
+
+@teams_router.get("/{team_id}/capabilities/me")
+async def my_team_capabilities(
+        team_id: int,
+        user: UserDepend,
+        uow: TeamUoW,
+):
+    try:
+        return await use_cases.TeamCapabilitiesUseCase(uow).execute(
+            team_id=team_id,
+            user_id=user.id,
+        )
+    except Exception as exc:
+        raise use_cases.map_team_exception(exc)
+

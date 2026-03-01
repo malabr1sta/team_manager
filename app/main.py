@@ -1,7 +1,10 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.admin.panel import setup_admin
@@ -49,6 +52,13 @@ app.add_middleware(
     SessionMiddleware,
     secret_key=base_deps.get_settings().secret_key,
 )
+FRONTEND_DIR = Path(__file__).resolve().parent / "frontend"
+app.mount("/ui", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="ui")
+
+
+@app.get("/", include_in_schema=False)
+async def root_redirect():
+    return RedirectResponse(url="/ui/index.html")
 
 
 PREFIX = "/api/v1"
