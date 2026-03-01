@@ -2,7 +2,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from starlette.middleware.sessions import SessionMiddleware
 
+from app.admin.panel import setup_admin
 from app.deps import base as base_deps
 from app.core.infrastructure import event_bus
 from app.core.register_handlers import register_event_handlers
@@ -31,7 +33,9 @@ async def lifespan(app: FastAPI):
     app.state.async_session = async_sessionmaker(
         engine, expire_on_commit=False
     )
+    app.state.engine = engine
     app.state.bus = event_bus.MemoryEventBus()
+    app.state.admin = setup_admin(app, engine)
 
     await register_event_handlers(app.state.bus, app.state.async_session)
 
@@ -41,6 +45,10 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=base_deps.get_settings().secret_key,
+)
 
 
 PREFIX = "/api/v1"
