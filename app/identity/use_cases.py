@@ -1,4 +1,4 @@
-from app.identity.unit_of_work import IdentitySQLAlchemyUnitOfWork
+from app.core.uow.identity import IdentityUnitOfWork
 from app.identity.custom_exception import UserNotFoundException
 from app.identity import dto
 from fastapi import HTTPException
@@ -8,7 +8,7 @@ from app.identity.custom_exception import UserDeleteException
 class DeleteUserUseCase:
     """Use case for soft-deleting a user by ID."""
 
-    def __init__(self, uow: IdentitySQLAlchemyUnitOfWork):
+    def __init__(self, uow: IdentityUnitOfWork):
         """Initialize with Unit of Work."""
         self.uow = uow
 
@@ -33,7 +33,7 @@ class DeleteUserUseCase:
 class UpdateUserUseCase:
     """Use case for updating user email and/or username."""
 
-    def __init__(self, uow: IdentitySQLAlchemyUnitOfWork):
+    def __init__(self, uow: IdentityUnitOfWork):
         """Initialize with Unit of Work."""
         self.uow = uow
 

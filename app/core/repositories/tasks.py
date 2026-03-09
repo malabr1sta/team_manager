@@ -76,3 +76,12 @@ class TaskProtocol(Protocol):
 
     async def save(self, task: Task) -> None:
         ...
+
+
+@runtime_checkable
+class TaskRepos(Protocol):
+    user: TaskUserProtocol
+    member: TaskMemberProtocol
+    team: TaskTeamProtocol
+    comment: TaskCommentProtocol
+    task: TaskProtocol

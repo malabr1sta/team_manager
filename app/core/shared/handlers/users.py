@@ -3,12 +3,12 @@ from abc import ABC
 
 from app.core.shared.events import identity as user_event
 from app.core.shared.models.users import BaseUser
-from app.core.unit_of_work import SQLAlchemyUnitOfWork
+from app.core.uow.handlers import HandlerUnitOfWork
 from app.core.infrastructure.event import EventHandler
 from app.core.custom_types import ids
 
 
-TUow = TypeVar('TUow', bound=SQLAlchemyUnitOfWork)
+TUow = TypeVar('TUow', bound=HandlerUnitOfWork)
 TUserDomain = TypeVar('TUserDomain', bound=Type[BaseUser])
 
 

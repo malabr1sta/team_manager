@@ -3,9 +3,9 @@ from datetime import datetime
 from fastapi import HTTPException
 
 from app.core.custom_types import ids
+from app.core.uow.evaluations import EvaluationUnitOfWork
 from app.evaluations import custom_exception, dto, management
 from app.evaluations.models import Evaluation
-from app.evaluations.unit_of_work import EvaluationSQLAlchemyUnitOfWork
 
 
 def map_evaluation_exception(exc: Exception) -> HTTPException:
@@ -31,7 +31,7 @@ def _to_evaluation_dto(item: Evaluation) -> dto.EvaluationReadDTO:
 
 
 class CreateEvaluationUseCase:
-    def __init__(self, uow: EvaluationSQLAlchemyUnitOfWork):
+    def __init__(self, uow: EvaluationUnitOfWork):
         self.uow = uow
 
     async def execute(
@@ -58,7 +58,7 @@ class CreateEvaluationUseCase:
 
 
 class ListMyEvaluationUseCase:
-    def __init__(self, uow: EvaluationSQLAlchemyUnitOfWork):
+    def __init__(self, uow: EvaluationUnitOfWork):
         self.uow = uow
 
     async def execute(
@@ -79,7 +79,7 @@ class ListMyEvaluationUseCase:
 
 
 class GetAverageEvaluationUseCase:
-    def __init__(self, uow: EvaluationSQLAlchemyUnitOfWork):
+    def __init__(self, uow: EvaluationUnitOfWork):
         self.uow = uow
 
     async def execute(

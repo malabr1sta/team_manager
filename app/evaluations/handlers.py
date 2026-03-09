@@ -6,30 +6,30 @@ from app.core.shared.handlers.users import (
     UserDeletedHandler,
     UserUpdatedHandler,
 )
+from app.core.uow.evaluations import EvaluationHandlerUnitOfWork
 from app.evaluations.models import Task, User
-from app.evaluations.unit_of_work import EvaluationSQLAlchemyUnitOfWork
 
 
 class EvaluationUserCreatedHandler(
-    UserCreatedHandler[EvaluationSQLAlchemyUnitOfWork, type[User]]
+    UserCreatedHandler[EvaluationHandlerUnitOfWork, type[User]]
 ):
     ...
 
 
 class EvaluationUserUpdatedHandler(
-    UserUpdatedHandler[EvaluationSQLAlchemyUnitOfWork, type[User]]
+    UserUpdatedHandler[EvaluationHandlerUnitOfWork, type[User]]
 ):
     ...
 
 
 class EvaluationUserDeletedHandler(
-    UserDeletedHandler[EvaluationSQLAlchemyUnitOfWork, type[User]]
+    UserDeletedHandler[EvaluationHandlerUnitOfWork, type[User]]
 ):
     ...
 
 
 class EvaluationTaskCreatedHandler(EventHandler[task_event.TaskCreated]):
-    def __init__(self, uow: EvaluationSQLAlchemyUnitOfWork):
+    def __init__(self, uow: EvaluationHandlerUnitOfWork):
         self.uow = uow
 
     async def handle(self, event: task_event.TaskCreated) -> None:
@@ -46,7 +46,7 @@ class EvaluationTaskCreatedHandler(EventHandler[task_event.TaskCreated]):
 
 
 class EvaluationTaskUpdatedHandler(EventHandler[task_event.TaskUpdated]):
-    def __init__(self, uow: EvaluationSQLAlchemyUnitOfWork):
+    def __init__(self, uow: EvaluationHandlerUnitOfWork):
         self.uow = uow
 
     async def handle(self, event: task_event.TaskUpdated) -> None:

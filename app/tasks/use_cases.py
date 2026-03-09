@@ -1,9 +1,9 @@
 from fastapi import HTTPException
 
 from app.core.custom_types import ids, task_patch, task_status
+from app.core.uow.tasks import TaskUnitOfWork
 from app.tasks import custom_exception, dto, management
 from app.tasks.models import Task
-from app.tasks.unit_of_work import TaskSQLAlchemyUnitOfWork
 
 
 def map_task_exception(exc: Exception) -> HTTPException:
@@ -46,7 +46,7 @@ def _to_task_dto(task: Task) -> dto.TaskReadDTO:
 
 
 class CreateTaskUseCase:
-    def __init__(self, uow: TaskSQLAlchemyUnitOfWork):
+    def __init__(self, uow: TaskUnitOfWork):
         self.uow = uow
 
     async def execute(self, command: dto.CreateTaskCommand) -> dto.TaskReadDTO:
@@ -68,7 +68,7 @@ class CreateTaskUseCase:
 
 
 class ReadTaskUseCase:
-    def __init__(self, uow: TaskSQLAlchemyUnitOfWork):
+    def __init__(self, uow: TaskUnitOfWork):
         self.uow = uow
 
     async def execute(self, task_id: int, actor_user_id: int) -> dto.TaskReadDTO:
@@ -86,7 +86,7 @@ class ReadTaskUseCase:
 
 
 class ListTaskUseCase:
-    def __init__(self, uow: TaskSQLAlchemyUnitOfWork):
+    def __init__(self, uow: TaskUnitOfWork):
         self.uow = uow
 
     async def execute(
@@ -126,7 +126,7 @@ class ListTaskUseCase:
 
 
 class AssignExecutorUseCase:
-    def __init__(self, uow: TaskSQLAlchemyUnitOfWork):
+    def __init__(self, uow: TaskUnitOfWork):
         self.uow = uow
 
     async def execute(self, command: dto.AssignExecutorCommand) -> dto.TaskReadDTO:
@@ -150,7 +150,7 @@ class AssignExecutorUseCase:
 
 
 class UpdateTaskUseCase:
-    def __init__(self, uow: TaskSQLAlchemyUnitOfWork):
+    def __init__(self, uow: TaskUnitOfWork):
         self.uow = uow
 
     async def execute(self, command: dto.UpdateTaskCommand) -> dto.TaskReadDTO:
@@ -178,7 +178,7 @@ class UpdateTaskUseCase:
 
 
 class AddCommentUseCase:
-    def __init__(self, uow: TaskSQLAlchemyUnitOfWork):
+    def __init__(self, uow: TaskUnitOfWork):
         self.uow = uow
 
     async def execute(self, command: dto.AddCommentCommand) -> dto.CommentReadDTO:
@@ -214,7 +214,7 @@ class AddCommentUseCase:
 
 
 class ListCommentUseCase:
-    def __init__(self, uow: TaskSQLAlchemyUnitOfWork):
+    def __init__(self, uow: TaskUnitOfWork):
         self.uow = uow
 
     async def execute(

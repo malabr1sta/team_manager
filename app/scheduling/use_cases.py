@@ -1,9 +1,9 @@
 from fastapi import HTTPException
 
 from app.core.custom_types import ids
+from app.core.uow.scheduling import SchedulingUnitOfWork
 from app.scheduling import custom_exception, dto, management
 from app.scheduling.models import Meeting
-from app.scheduling.unit_of_work import SchedulingSQLAlchemyUnitOfWork
 
 
 def map_scheduling_exception(exc: Exception) -> HTTPException:
@@ -48,7 +48,7 @@ def _to_meeting_dto(meeting: Meeting) -> dto.MeetingReadDTO:
 
 
 class CreateMeetingUseCase:
-    def __init__(self, uow: SchedulingSQLAlchemyUnitOfWork):
+    def __init__(self, uow: SchedulingUnitOfWork):
         self.uow = uow
 
     async def execute(self, command: dto.CreateMeetingCommand) -> dto.MeetingReadDTO:
@@ -71,7 +71,7 @@ class CreateMeetingUseCase:
 
 
 class ReadMeetingUseCase:
-    def __init__(self, uow: SchedulingSQLAlchemyUnitOfWork):
+    def __init__(self, uow: SchedulingUnitOfWork):
         self.uow = uow
 
     async def execute(self, meeting_id: int, actor_user_id: int) -> dto.MeetingReadDTO:
@@ -85,7 +85,7 @@ class ReadMeetingUseCase:
 
 
 class ListMeetingUseCase:
-    def __init__(self, uow: SchedulingSQLAlchemyUnitOfWork):
+    def __init__(self, uow: SchedulingUnitOfWork):
         self.uow = uow
 
     async def execute(
@@ -112,7 +112,7 @@ class ListMeetingUseCase:
 
 
 class AddParticipantUseCase:
-    def __init__(self, uow: SchedulingSQLAlchemyUnitOfWork):
+    def __init__(self, uow: SchedulingUnitOfWork):
         self.uow = uow
 
     async def execute(
@@ -145,7 +145,7 @@ class AddParticipantUseCase:
 
 
 class RemoveParticipantUseCase:
-    def __init__(self, uow: SchedulingSQLAlchemyUnitOfWork):
+    def __init__(self, uow: SchedulingUnitOfWork):
         self.uow = uow
 
     async def execute(
@@ -172,7 +172,7 @@ class RemoveParticipantUseCase:
 
 
 class CancelMeetingUseCase:
-    def __init__(self, uow: SchedulingSQLAlchemyUnitOfWork):
+    def __init__(self, uow: SchedulingUnitOfWork):
         self.uow = uow
 
     async def execute(

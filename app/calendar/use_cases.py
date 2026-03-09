@@ -3,8 +3,8 @@ from datetime import date, datetime, time, timedelta, timezone
 from fastapi import HTTPException
 
 from app.calendar import dto, models
-from app.calendar.unit_of_work import CalendarSQLAlchemyUnitOfWork
 from app.core.custom_types import ids
+from app.core.uow.calendar import CalendarUnitOfWork
 
 
 def _to_event_dto(event: models.CalendarEvent) -> dto.CalendarEventReadDTO:
@@ -23,7 +23,7 @@ def _to_event_dto(event: models.CalendarEvent) -> dto.CalendarEventReadDTO:
 class CalendarEventsForDayUseCase:
     """Reads calendar events for one day."""
 
-    def __init__(self, uow: CalendarSQLAlchemyUnitOfWork):
+    def __init__(self, uow: CalendarUnitOfWork):
         self.uow = uow
 
     async def execute(self, user_id: int, day: date) -> dto.CalendarEventsDTO:
@@ -45,7 +45,7 @@ class CalendarEventsForDayUseCase:
 class CalendarEventsForMonthUseCase:
     """Reads calendar events for one month."""
 
-    def __init__(self, uow: CalendarSQLAlchemyUnitOfWork):
+    def __init__(self, uow: CalendarUnitOfWork):
         self.uow = uow
 
     async def execute(

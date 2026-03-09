@@ -6,8 +6,8 @@ from app.core.shared.handlers.users import (
     UserDeletedHandler,
     UserUpdatedHandler,
 )
+from app.core.uow.scheduling import SchedulingHandlerUnitOfWork
 from app.scheduling.models import Team, User
-from app.scheduling.unit_of_work import SchedulingSQLAlchemyUnitOfWork
 
 
 def _is_manager_role(user_role: str) -> bool:
@@ -15,25 +15,25 @@ def _is_manager_role(user_role: str) -> bool:
 
 
 class SchedulingUserCreatedHandler(
-    UserCreatedHandler[SchedulingSQLAlchemyUnitOfWork, type[User]]
+    UserCreatedHandler[SchedulingHandlerUnitOfWork, type[User]]
 ):
     ...
 
 
 class SchedulingUserUpdatedHandler(
-    UserUpdatedHandler[SchedulingSQLAlchemyUnitOfWork, type[User]]
+    UserUpdatedHandler[SchedulingHandlerUnitOfWork, type[User]]
 ):
     ...
 
 
 class SchedulingUserDeletedHandler(
-    UserDeletedHandler[SchedulingSQLAlchemyUnitOfWork, type[User]]
+    UserDeletedHandler[SchedulingHandlerUnitOfWork, type[User]]
 ):
     ...
 
 
 class SchedulingTeamCreatedHandler(EventHandler[team_event.TeamCreated]):
-    def __init__(self, uow: SchedulingSQLAlchemyUnitOfWork):
+    def __init__(self, uow: SchedulingHandlerUnitOfWork):
         self.uow = uow
 
     async def handle(self, event: team_event.TeamCreated) -> None:
@@ -44,7 +44,7 @@ class SchedulingTeamCreatedHandler(EventHandler[team_event.TeamCreated]):
 
 
 class SchedulingMemberAddHandler(EventHandler[team_event.MemberAddTeam]):
-    def __init__(self, uow: SchedulingSQLAlchemyUnitOfWork):
+    def __init__(self, uow: SchedulingHandlerUnitOfWork):
         self.uow = uow
 
     async def handle(self, event: team_event.MemberAddTeam) -> None:
@@ -66,7 +66,7 @@ class SchedulingMemberAddHandler(EventHandler[team_event.MemberAddTeam]):
 
 
 class SchedulingMemberRemoveHandler(EventHandler[team_event.MemberRemoveTeam]):
-    def __init__(self, uow: SchedulingSQLAlchemyUnitOfWork):
+    def __init__(self, uow: SchedulingHandlerUnitOfWork):
         self.uow = uow
 
     async def handle(self, event: team_event.MemberRemoveTeam) -> None:
@@ -80,7 +80,7 @@ class SchedulingMemberRemoveHandler(EventHandler[team_event.MemberRemoveTeam]):
 
 
 class SchedulingMemberChangeRoleHandler(EventHandler[team_event.MemberChangeRole]):
-    def __init__(self, uow: SchedulingSQLAlchemyUnitOfWork):
+    def __init__(self, uow: SchedulingHandlerUnitOfWork):
         self.uow = uow
 
     async def handle(self, event: team_event.MemberChangeRole) -> None:

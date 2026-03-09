@@ -1,9 +1,7 @@
 from typing import Type
 
 from app.teams.models import User
-from app.teams.unit_of_work import (
-    TeamSQLAlchemyUnitOfWork
-)
+from app.core.uow.teams import TeamHandlerUnitOfWork
 from app.core.shared.handlers.users import (
     UserCreatedHandler,
     UserDeletedHandler,
@@ -12,20 +10,19 @@ from app.core.shared.handlers.users import (
 
 
 class TeamUserCreatedHandler(
-    UserCreatedHandler[TeamSQLAlchemyUnitOfWork, Type[User]]
+    UserCreatedHandler[TeamHandlerUnitOfWork, Type[User]]
 ):
     ...
 
 
 class TeamUserUpdatedHandler(
-    UserUpdatedHandler[TeamSQLAlchemyUnitOfWork, Type[User]]
+    UserUpdatedHandler[TeamHandlerUnitOfWork, Type[User]]
 ):
     ...
 
 
 class TeamUserDeletedHandler(
-    UserDeletedHandler[TeamSQLAlchemyUnitOfWork, Type[User]]
+    UserDeletedHandler[TeamHandlerUnitOfWork, Type[User]]
 ):
     ...
-
 

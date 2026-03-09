@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 
 from app.calendar import models
-from app.calendar.unit_of_work import CalendarSQLAlchemyUnitOfWork
 from app.core.custom_types import calendar_type, ids
 from app.core.infrastructure.event import EventHandler
 from app.core.shared.events import meetings as meeting_event
@@ -11,6 +10,7 @@ from app.core.shared.handlers.users import (
     UserDeletedHandler,
     UserUpdatedHandler,
 )
+from app.core.uow.calendar import CalendarHandlerUnitOfWork
 
 
 def _build_calendar_event(
@@ -40,7 +40,7 @@ def _build_calendar_event(
 
 
 class CalendarUserCreatedHandler(
-    UserCreatedHandler[CalendarSQLAlchemyUnitOfWork, type[models.CalendarUser]]
+    UserCreatedHandler[CalendarHandlerUnitOfWork, type[models.CalendarUser]]
 ):
     """Creates calendar user projection."""
 
@@ -48,7 +48,7 @@ class CalendarUserCreatedHandler(
 
 
 class CalendarUserUpdatedHandler(
-    UserUpdatedHandler[CalendarSQLAlchemyUnitOfWork, type[models.CalendarUser]]
+    UserUpdatedHandler[CalendarHandlerUnitOfWork, type[models.CalendarUser]]
 ):
     """Updates calendar user projection."""
 
@@ -56,7 +56,7 @@ class CalendarUserUpdatedHandler(
 
 
 class CalendarUserDeletedHandler(
-    UserDeletedHandler[CalendarSQLAlchemyUnitOfWork, type[models.CalendarUser]]
+    UserDeletedHandler[CalendarHandlerUnitOfWork, type[models.CalendarUser]]
 ):
     """Marks calendar user projection as deleted."""
 
@@ -66,7 +66,7 @@ class CalendarUserDeletedHandler(
 class CalendarTaskCreatedHandler(EventHandler[task_event.TaskCreated]):
     """Creates task calendar events."""
 
-    def __init__(self, uow: CalendarSQLAlchemyUnitOfWork):
+    def __init__(self, uow: CalendarHandlerUnitOfWork):
         self.uow = uow
 
     async def handle(self, event: task_event.TaskCreated) -> None:
@@ -104,7 +104,7 @@ class CalendarTaskCreatedHandler(EventHandler[task_event.TaskCreated]):
 class CalendarTaskUpdatedHandler(EventHandler[task_event.TaskUpdated]):
     """Updates task calendar events."""
 
-    def __init__(self, uow: CalendarSQLAlchemyUnitOfWork):
+    def __init__(self, uow: CalendarHandlerUnitOfWork):
         self.uow = uow
 
     async def handle(self, event: task_event.TaskUpdated) -> None:
@@ -165,7 +165,7 @@ class CalendarTaskUpdatedHandler(EventHandler[task_event.TaskUpdated]):
 class CalendarMeetingCreatedHandler(EventHandler[meeting_event.MeetingCreated]):
     """Creates meeting calendar events."""
 
-    def __init__(self, uow: CalendarSQLAlchemyUnitOfWork):
+    def __init__(self, uow: CalendarHandlerUnitOfWork):
         self.uow = uow
 
     async def handle(self, event: meeting_event.MeetingCreated) -> None:
@@ -195,7 +195,7 @@ class CalendarMeetingCreatedHandler(EventHandler[meeting_event.MeetingCreated]):
 class CalendarMeetingUpdatedHandler(EventHandler[meeting_event.MeetingUpdated]):
     """Updates meeting calendar events."""
 
-    def __init__(self, uow: CalendarSQLAlchemyUnitOfWork):
+    def __init__(self, uow: CalendarHandlerUnitOfWork):
         self.uow = uow
 
     async def handle(self, event: meeting_event.MeetingUpdated) -> None:
@@ -237,7 +237,7 @@ class CalendarMeetingUpdatedHandler(EventHandler[meeting_event.MeetingUpdated]):
 class CalendarMeetingCancelledHandler(EventHandler[meeting_event.MeetingCancelled]):
     """Cancels meeting calendar events."""
 
-    def __init__(self, uow: CalendarSQLAlchemyUnitOfWork):
+    def __init__(self, uow: CalendarHandlerUnitOfWork):
         self.uow = uow
 
     async def handle(self, event: meeting_event.MeetingCancelled) -> None:

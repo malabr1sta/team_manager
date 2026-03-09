@@ -4,13 +4,11 @@ from app.core.shared.handlers.users import (
     UserDeletedHandler,
     UserUpdatedHandler,
 )
+from app.core.uow.tasks import TaskHandlerUnitOfWork
 from app.core.custom_types import ids, role
 from app.core.infrastructure.event import EventHandler
 from app.tasks.models import Team, TaskUser
 from app.tasks.custom_exception import TeamNotFoundException
-from app.tasks.unit_of_work import (
-        TaskSQLAlchemyUnitOfWork
-)
 
 
 class TeamCreatedHandler(EventHandler[team_event.TeamCreated]):
@@ -18,7 +16,7 @@ class TeamCreatedHandler(EventHandler[team_event.TeamCreated]):
 
     def __init__(
             self,
-            uow: TaskSQLAlchemyUnitOfWork,
+            uow: TaskHandlerUnitOfWork,
     ):
         self.uow = uow
 
@@ -32,19 +30,19 @@ class TeamCreatedHandler(EventHandler[team_event.TeamCreated]):
 
 
 class TaskUserCreatedHandler(
-    UserCreatedHandler[TaskSQLAlchemyUnitOfWork, type[TaskUser]]
+    UserCreatedHandler[TaskHandlerUnitOfWork, type[TaskUser]]
 ):
     ...
 
 
 class TaskUserUpdatedHandler(
-    UserUpdatedHandler[TaskSQLAlchemyUnitOfWork, type[TaskUser]]
+    UserUpdatedHandler[TaskHandlerUnitOfWork, type[TaskUser]]
 ):
     ...
 
 
 class TaskUserDeletedHandler(
-    UserDeletedHandler[TaskSQLAlchemyUnitOfWork, type[TaskUser]]
+    UserDeletedHandler[TaskHandlerUnitOfWork, type[TaskUser]]
 ):
     ...
 
@@ -54,7 +52,7 @@ class MemberAddTeamHandler(EventHandler[team_event.MemberAddTeam]):
 
     def __init__(
             self,
-            uow: TaskSQLAlchemyUnitOfWork,
+            uow: TaskHandlerUnitOfWork,
     ):
         self.uow = uow
 
@@ -63,7 +61,7 @@ class MemberAddTeamHandler(EventHandler[team_event.MemberAddTeam]):
         async with self.uow as uow:
             team_model = await uow.repos.team.get_by_id(event.team_id)
             if team_model is None:
-                raise TeamNotFoundException(f"Team not found")
+                raise TeamNotFoundException("Team not found")
             team_model.add_member(
                 ids.UserId(event.user_id),
                 role.UserTaskRole(event.role)
@@ -77,7 +75,7 @@ class MemberRemoveTeamHandler(EventHandler[team_event.MemberRemoveTeam]):
 
     def __init__(
             self,
-            uow: TaskSQLAlchemyUnitOfWork,
+            uow: TaskHandlerUnitOfWork,
     ):
         self.uow = uow
 
@@ -87,7 +85,7 @@ class MemberRemoveTeamHandler(EventHandler[team_event.MemberRemoveTeam]):
             team_model = await uow.repos.team.get_by_id(event.team_id)
             if team_model is None:
 
-                raise TeamNotFoundException(f"Team not found")
+                raise TeamNotFoundException("Team not found")
             team_model.remove_member(
                 ids.UserId(event.user_id),
                 role.UserTaskRole(event.role)
@@ -101,7 +99,7 @@ class MemberChangeRoleHandler(EventHandler[team_event.MemberChangeRole]):
 
     def __init__(
             self,
-            uow: TaskSQLAlchemyUnitOfWork,
+            uow: TaskHandlerUnitOfWork,
     ):
         self.uow = uow
 
@@ -111,7 +109,7 @@ class MemberChangeRoleHandler(EventHandler[team_event.MemberChangeRole]):
             team_model = await uow.repos.team.get_by_id(event.team_id)
             if team_model is None:
 
-                raise TeamNotFoundException(f"Team not found")
+                raise TeamNotFoundException("Team not found")
             team_model.change_role(
                 user_id=ids.UserId(event.user_id),
                 old_role=role.UserTaskRole(event.old_role),
