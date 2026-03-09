@@ -10,6 +10,7 @@ from app.tasks import custom_exception
 from dataclasses import dataclass
 
 
+
 class TaskUser(BaseUser):
     ...
 

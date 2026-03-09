@@ -39,4 +39,5 @@ def setup_admin(app: FastAPI, engine: AsyncEngine) -> Admin:
     admin.add_view(views.SchedulingUserAdmin)
     admin.add_view(views.CalendarEventAdmin)
     admin.add_view(views.CalendarUserAdmin)
+
     return admin

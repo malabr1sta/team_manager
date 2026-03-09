@@ -1,12 +1,12 @@
 from fastapi import HTTPException
 
-from app.teams.unit_of_work import TeamSQLAlchemyUnitOfWork
 from app.teams import custom_exception
 from app.teams import (
     dto,
     management
 )
 from app.core.custom_types import ids, role
+from app.core.uow.teams import TeamUnitOfWork
 
 
 class CreateTeamUseCase:
@@ -19,7 +19,7 @@ class CreateTeamUseCase:
     - TeamCreated event is recorded and published
     """
 
-    def __init__(self, uow: TeamSQLAlchemyUnitOfWork):
+    def __init__(self, uow: TeamUnitOfWork):
         """Initialize with Unit of Work."""
         self.uow = uow
 
@@ -66,7 +66,7 @@ class CreateTeamUseCase:
 
 class ReadTeamUseCase:
 
-    def __init__(self, uow: TeamSQLAlchemyUnitOfWork):
+    def __init__(self, uow: TeamUnitOfWork):
         """Initialize with Unit of Work."""
         self.uow = uow
 
@@ -108,7 +108,7 @@ class ReadTeamUseCase:
 
 
 class AddMemberUseCase:
-    def __init__(self, uow: TeamSQLAlchemyUnitOfWork):
+    def __init__(self, uow: TeamUnitOfWork):
         self.uow = uow
 
     async def execute(self, command: dto.AddMemberCommand) -> dto.TeamReadDTO:
@@ -138,7 +138,7 @@ class AddMemberUseCase:
 
 
 class RemoveMemberUseCase:
-    def __init__(self, uow: TeamSQLAlchemyUnitOfWork):
+    def __init__(self, uow: TeamUnitOfWork):
         self.uow = uow
 
     async def execute(self, command: dto.RemoveMemberCommand) -> dto.TeamReadDTO:
@@ -161,7 +161,7 @@ class RemoveMemberUseCase:
 
 
 class ChangeMemberRoleUseCase:
-    def __init__(self, uow: TeamSQLAlchemyUnitOfWork):
+    def __init__(self, uow: TeamUnitOfWork):
         self.uow = uow
 
     async def execute(
@@ -192,7 +192,7 @@ class ChangeMemberRoleUseCase:
 
 
 class ListMyTeamsUseCase:
-    def __init__(self, uow: TeamSQLAlchemyUnitOfWork):
+    def __init__(self, uow: TeamUnitOfWork):
         self.uow = uow
 
     async def execute(self, user_id: int) -> dto.TeamListDTO:
@@ -214,7 +214,7 @@ class ListMyTeamsUseCase:
 
 
 class TeamCapabilitiesUseCase:
-    def __init__(self, uow: TeamSQLAlchemyUnitOfWork):
+    def __init__(self, uow: TeamUnitOfWork):
         self.uow = uow
 
     async def execute(self, team_id: int, user_id: int) -> dto.TeamCapabilitiesDTO:

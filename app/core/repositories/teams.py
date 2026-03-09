@@ -1,6 +1,6 @@
 from typing import Protocol, runtime_checkable
 
-from app.teams.models import Team, Member
+from app.teams.models import Team, Member, User
 
 
 @runtime_checkable
@@ -8,6 +8,9 @@ class TeamUserProtocol(Protocol):
     """Protocol user's repository"""
 
     async def save(self, id: int):
+        ...
+
+    async def get_by_id(self, id: int) -> User | None:
         ...
 
 
@@ -41,3 +44,9 @@ class MemberRepositoryProtocol(Protocol):
     async def save(self, member: Member) -> Member:
         ...
 
+
+@runtime_checkable
+class TeamRepos(Protocol):
+    team: TeamRepositoryProtocol
+    member: MemberRepositoryProtocol
+    user: TeamUserProtocol
